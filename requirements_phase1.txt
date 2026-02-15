@@ -1,0 +1,15 @@
+# Phase 1: Core Simulator Dependencies
+# Install with: pip install -r requirements_phase1.txt
+
+numpy>=1.21.0
+matplotlib>=3.5.0
+pandas>=1.3.0
+
+# For later phases (you can install now or later)
+# gym>=0.21.0
+# stable-baselines3>=1.6.0
+# torch>=1.10.0
+# fastapi>=0.95.0
+# uvicorn>=0.20.0
+# psycopg2-binary>=2.9.0
+# sqlalchemy>=1.4.0
