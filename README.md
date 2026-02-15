@@ -4,11 +4,6 @@
 
 RouteMATE is a machine learning-based ride-sharing optimization system that uses reinforcement learning to improve vehicle-request matching compared to traditional heuristic approaches. The system supports vehicle pooling (multiple passengers per vehicle) and provides a complete simulation environment for training and evaluation.
 
-**Team:** TE IT A/A3  
-**Institution:** St. Francis Institute of Technology  
-**Course:** Mini Project – 2B Web Based on ML (ITM 601)
-
----
 
 ## 📊 Current Status (Phases 1-3 Complete)
 
@@ -572,16 +567,7 @@ cd src/frontend && npm start
 tensorboard --logdir outputs/logs
 ```
 
----
 
-## 📝 License & Credits
-
-**Project:** RouteMATE  
-**Team:** Adithya Madivala (58), Makarand Karanjkar (60), Shaina Lopes (71), Mahima Kasughar (73)  
-**Mentor:** Mrs. Pooja Gurjar  
-**Institution:** St. Francis Institute of Technology
-
----
 
 ## 🆘 Need Help?
 
