@@ -1,0 +1,385 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  background: #f5f5f5;
+}
+
+/* Header */
+.header {
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  color: white;
+  padding: 15px 30px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+.header h1 {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.header p {
+  font-size: 13px;
+  color: #a0aec0;
+}
+
+/* Main Layout */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.main-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Left Panel */
+.left-panel {
+  width: 340px;
+  background: white;
+  overflow-y: auto;
+  box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+  z-index: 1000;
+}
+
+/* Map */
+.map-container {
+  flex: 1;
+  position: relative;
+}
+
+.map-selecting {
+  cursor: crosshair !important;
+}
+
+/* Booking Panel */
+.booking-panel {
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.booking-panel h2 {
+  font-size: 18px;
+  margin-bottom: 15px;
+  color: #1a1a2e;
+}
+
+/* Policy Selector */
+.policy-selector {
+  margin-bottom: 15px;
+}
+
+.policy-selector p {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.policy-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.policy-btn {
+  flex: 1;
+  padding: 8px 5px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.policy-btn:hover {
+  border-color: #667eea;
+  color: #667eea;
+}
+
+.policy-btn.active {
+  background: #667eea;
+  border-color: #667eea;
+  color: white;
+  font-weight: 600;
+}
+
+/* Location Input */
+.location-input {
+  background: #f8f9fa;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.location-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot.green { background: #48bb78; }
+.dot.red { background: #f56565; }
+
+.location-value {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 8px;
+  padding: 5px;
+  background: white;
+  border-radius: 5px;
+  border: 1px solid #e2e8f0;
+}
+
+.select-btn {
+  width: 100%;
+  padding: 8px;
+  border: 2px dashed #cbd5e0;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  font-size: 12px;
+  color: #667eea;
+  transition: all 0.2s;
+}
+
+.select-btn:hover {
+  background: #ebf4ff;
+  border-color: #667eea;
+}
+
+.select-btn.active {
+  background: #ebf4ff;
+  border-color: #667eea;
+  border-style: solid;
+  font-weight: 600;
+}
+
+.select-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Instruction Box */
+.instruction-box {
+  background: #ebf8ff;
+  border: 1px solid #bee3f8;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 12px;
+  color: #2b6cb0;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.book-btn {
+  flex: 1;
+  padding: 12px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 15px rgba(102,126,234,0.4);
+}
+
+.book-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102,126,234,0.5);
+}
+
+.book-btn:disabled {
+  background: #cbd5e0;
+  box-shadow: none;
+  transform: none;
+  cursor: not-allowed;
+}
+
+.reset-btn {
+  padding: 12px 15px;
+  background: white;
+  color: #666;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.reset-btn:hover {
+  border-color: #f56565;
+  color: #f56565;
+}
+
+/* Trip Summary */
+.trip-summary {
+  margin-top: 15px;
+  padding: 12px;
+  background: #f0fff4;
+  border: 1px solid #c6f6d5;
+  border-radius: 10px;
+}
+
+.trip-summary p {
+  font-weight: 600;
+  font-size: 13px;
+  color: #276749;
+  margin-bottom: 5px;
+}
+
+.trip-summary small {
+  color: #48bb78;
+  font-size: 12px;
+}
+
+/* Trip Status */
+.trip-status {
+  padding: 20px;
+}
+
+.trip-status h3 {
+  font-size: 16px;
+  color: #1a1a2e;
+  margin-bottom: 15px;
+}
+
+/* Vehicle Info */
+.vehicle-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #1a1a2e;
+  color: white;
+  padding: 12px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  font-size: 28px;
+}
+
+.vehicle-name {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.vehicle-info small {
+  color: #a0aec0;
+  font-size: 12px;
+}
+
+/* Steps */
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 15px;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 8px;
+  font-size: 13px;
+  position: relative;
+}
+
+.step.completed {
+  background: #f0fff4;
+  color: #276749;
+}
+
+.step.pending {
+  background: #f7fafc;
+  color: #a0aec0;
+}
+
+.step.current {
+  background: #ebf4ff;
+  color: #2b6cb0;
+  font-weight: 600;
+}
+
+.step-icon {
+  font-size: 18px;
+  width: 30px;
+  text-align: center;
+}
+
+.step-label {
+  font-size: 13px;
+}
+
+/* Status Message */
+.status-message {
+  background: #ebf8ff;
+  border-left: 4px solid #667eea;
+  padding: 12px;
+  border-radius: 0 8px 8px 0;
+  font-size: 13px;
+  color: #2b6cb0;
+  margin-bottom: 15px;
+}
+
+/* Trip Details */
+.trip-details {
+  background: #f8f9fa;
+  border-radius: 10px;
+  padding: 15px;
+}
+
+.trip-details h4 {
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid #eee;
+  font-size: 13px;
+  color: #555;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+/* Vehicle Icon on Map */
+.vehicle-icon {
+  font-size: 24px;
+  background: none !important;
+  border: none !important;
+}

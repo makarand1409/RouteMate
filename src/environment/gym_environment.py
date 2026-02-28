@@ -386,7 +386,7 @@ if __name__ == "__main__":
     print("Testing with RANDOM agent (baseline)")
     print("=" * 70)
     
-    obs = env.reset()
+    obs, info = env.reset()
     print(f"\nInitial observation shape: {obs.shape}")
     print(f"Initial observation: {obs[:10]}... (showing first 10 values)")
     
@@ -400,7 +400,8 @@ if __name__ == "__main__":
         action = env.action_space.sample()
         
         # Step environment
-        obs, reward, done, info = env.step(action)
+        obs, reward, terminated, truncated, info = env.step(action)
+        done = terminated or truncated
         total_reward += reward
         step_count += 1
         

@@ -1,0 +1,187 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap');
+
+.trip-status {
+  padding: 20px;
+  font-family: 'DM Sans', sans-serif;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* Driver Card */
+.driver-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #000;
+  color: #fff;
+  padding: 16px;
+  border-radius: 14px;
+  margin-bottom: 15px;
+}
+
+.driver-avatar {
+  font-size: 36px;
+  width: 50px;
+  height: 50px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.driver-name {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0 0 3px 0;
+}
+
+.driver-info small {
+  font-size: 12px;
+  color: rgba(255,255,255,0.6);
+}
+
+.driver-eta {
+  margin-left: auto;
+  text-align: center;
+}
+
+.driver-eta p {
+  font-size: 20px;
+  margin: 0;
+}
+
+.driver-eta small {
+  font-size: 11px;
+  color: rgba(255,255,255,0.6);
+}
+
+/* Policy Badge */
+.policy-badge {
+  display: inline-block;
+  background: #f0f0f0;
+  color: #333;
+  padding: 5px 12px;
+  border-radius: 50px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+/* Steps */
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 15px;
+  position: relative;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  transition: all 0.3s;
+  position: relative;
+}
+
+.step.done {
+  background: #f0fff4;
+  color: #276749;
+}
+
+.step.current {
+  background: #000;
+  color: #fff;
+  font-weight: 600;
+}
+
+.step.pending {
+  background: #f7f7f7;
+  color: #bbb;
+}
+
+.step-icon { font-size: 18px; }
+.step-label { font-size: 13px; }
+
+.step-pulse {
+  margin-left: auto;
+  width: 8px;
+  height: 8px;
+  background: #fff;
+  border-radius: 50%;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Status Message */
+.status-msg {
+  background: #f8f8f8;
+  border-left: 3px solid #000;
+  padding: 12px 15px;
+  border-radius: 0 8px 8px 0;
+  font-size: 13px;
+  color: #333;
+  margin-bottom: 15px;
+}
+
+/* Trip Summary */
+.trip-summary {
+  background: #f8f8f8;
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.trip-summary h4 {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: #000;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+  font-size: 13px;
+  color: #555;
+}
+
+.summary-row:last-of-type { border-bottom: none; }
+
+.summary-row span:last-child {
+  font-weight: 600;
+  color: #000;
+}
+
+.new-ride-btn {
+  width: 100%;
+  margin-top: 15px;
+  padding: 13px;
+  background: #000;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.new-ride-btn:hover {
+  background: #222;
+  transform: translateY(-1px);
+}
