@@ -22,16 +22,14 @@ function LandingPage() {
         <div className="nav-left">
           <div className="logo">RouteMATE</div>
           <div className="nav-links">
-            <a href="#">Ride</a>
-            <a href="#">Drive</a>
-            <a href="#">Business</a>
+            <a href="/book">Ride</a>
+            <a href="/dashboard">Dashboard</a>
             <a href="#">About</a>
           </div>
         </div>
         <div className="nav-right">
-          <a href="#" className="nav-link">Help</a>
-          <a href="#" className="nav-link">Log in</a>
-          <button className="signup-btn">Sign up</button>
+          <a href="/login" className="nav-link">Log in</a>
+          <button className="signup-btn" onClick={() => navigate('/signup')}>Sign up</button>
         </div>
       </nav>
 

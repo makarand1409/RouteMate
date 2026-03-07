@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import MapView from '../components/MapView';
 import TripStatus from '../components/TripStatus';
+import { runSimulation } from '../services/api';
 import './BookingPage.css';
 
 const MUMBAI_VEHICLES = [
@@ -15,6 +17,7 @@ const MUMBAI_VEHICLES = [
 function BookingPage() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const { pickup: initialPickup, dropoff: initialDropoff } = location.state || {};
 
   const [pickup, setPickup] = useState(null);
@@ -40,19 +43,25 @@ function BookingPage() {
     }
   };
 
-  const handleBookRide = () => {
+  const handleBookRide = async () => {
     if (!pickup || !dropoff) {
       alert('Please select both pickup and dropoff on the map!');
       return;
     }
 
+    // Run a quick 1-step simulation on the backend with the chosen policy
     let assigned;
-
-    if (policy === 'random') {
-      // Random policy
-      assigned = vehicles[Math.floor(Math.random() * vehicles.length)];
-    } else if (policy === 'greedy') {
-      // Greedy - nearest vehicle
+    try {
+      const data = await runSimulation({ policy, numSteps: 50 });
+      // Pick the vehicle that served the most customers as "assigned"
+      const best = data.vehicles.reduce((a, b) =>
+        b.total_served > a.total_served ? b : a, data.vehicles[0]);
+      assigned = {
+        ...vehicles.find(v => v.id === best.vehicle_id) || vehicles[0],
+        backendData: data,
+      };
+    } catch {
+      // Fallback to client-side nearest if backend is unreachable
       let minDist = Infinity;
       vehicles.forEach(v => {
         const dist = Math.sqrt(
@@ -61,22 +70,6 @@ function BookingPage() {
         );
         if (dist < minDist) {
           minDist = dist;
-          assigned = v;
-        }
-      });
-    } else {
-      // ML policy - weighted scoring
-      let bestScore = -Infinity;
-      vehicles.forEach(v => {
-        const dist = Math.sqrt(
-          Math.pow(v.position[0] - pickup.lat, 2) +
-          Math.pow(v.position[1] - pickup.lng, 2)
-        );
-        // ML considers distance + simulated occupancy
-        const occupancy = Math.random() * 0.5;
-        const score = -(dist * 0.7) - (occupancy * 0.3);
-        if (score > bestScore) {
-          bestScore = score;
           assigned = v;
         }
       });
@@ -127,6 +120,9 @@ function BookingPage() {
             onClick={() => setShowPolicyInfo(!showPolicyInfo)}
           >
             🧠 Policy: {policy.toUpperCase()}
+          </button>
+          <button className="policy-info-btn" onClick={() => { logout(); navigate('/'); }}>
+            Logout
           </button>
         </div>
       </nav>

@@ -1,0 +1,190 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
+
+/* ── Layout ───────────────────────────────────── */
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  font-family: 'DM Sans', sans-serif;
+  background: #f5f5f7;
+}
+
+/* ── Nav ──────────────────────────────────────── */
+.dash-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 24px;
+  height: 56px;
+  background: #000;
+  flex-shrink: 0;
+}
+.dash-nav-left { display: flex; align-items: center; gap: 12px; }
+.dash-logo {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 20px; font-weight: 800; color: #fff; cursor: pointer;
+}
+.dash-badge {
+  background: rgba(255,255,255,.12); color: #aaa;
+  font-size: 11px; font-weight: 600;
+  padding: 3px 10px; border-radius: 50px;
+}
+.dash-nav-btn {
+  background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2);
+  color: #fff; padding: 7px 16px; border-radius: 50px;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}
+.dash-nav-btn:hover { background: rgba(255,255,255,.2); }
+.dash-user {
+  color: #fff; font-size: 13px; font-weight: 500;
+  padding: 0 8px; opacity: .8;
+}
+
+/* ── Body ─────────────────────────────────────── */
+.dash-body { display: flex; flex: 1; overflow: hidden; }
+
+/* ── Sidebar ──────────────────────────────────── */
+.dash-sidebar {
+  width: 320px; background: #fff;
+  padding: 24px 20px; overflow-y: auto;
+  border-right: 1px solid #e8e8e8; flex-shrink: 0;
+}
+.dash-sidebar h2 {
+  font-size: 17px; font-weight: 700; margin-bottom: 20px;
+}
+
+.ctrl-group { margin-bottom: 18px; }
+.ctrl-group label {
+  display: block; font-size: 13px; font-weight: 600;
+  color: #444; margin-bottom: 8px;
+}
+.ctrl-group input[type="range"] {
+  width: 100%; accent-color: #000;
+}
+
+/* Policy cards */
+.policy-cards { display: flex; flex-direction: column; gap: 6px; }
+.pol-card {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 10px;
+  border: 2px solid #eee; cursor: pointer;
+  transition: all .15s;
+}
+.pol-card:hover { border-color: #bbb; }
+.pol-card.active { border-color: #000; background: #000; color: #fff; }
+.pol-card.active .pol-desc { color: rgba(255,255,255,.6); }
+.pol-icon { font-size: 20px; }
+.pol-label { font-size: 13px; font-weight: 700; }
+.pol-desc { font-size: 11px; color: #888; margin-left: auto; }
+
+/* Buttons */
+.run-btn, .run-all-btn {
+  width: 100%; padding: 13px; border: none; border-radius: 10px;
+  font-size: 14px; font-weight: 700; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; transition: all .15s;
+}
+.run-btn {
+  background: #000; color: #fff; margin-bottom: 8px;
+}
+.run-btn:hover { background: #222; }
+.run-btn:disabled, .run-all-btn:disabled {
+  opacity: .5; cursor: not-allowed;
+}
+.run-all-btn {
+  background: #f0f0f0; color: #000; margin-bottom: 12px;
+}
+.run-all-btn:hover { background: #e4e4e4; }
+
+.dash-error {
+  background: #fff0f0; color: #c00; padding: 10px;
+  border-radius: 8px; font-size: 13px; margin-top: 8px;
+}
+
+/* ── Main ─────────────────────────────────────── */
+.dash-main {
+  flex: 1; overflow-y: auto; padding: 24px;
+}
+
+/* Empty state */
+.dash-empty {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; height: 100%;
+  color: #aaa; text-align: center;
+}
+.dash-empty span { font-size: 48px; margin-bottom: 12px; }
+.dash-empty h3 { font-size: 18px; color: #555; margin-bottom: 6px; }
+.dash-empty p { font-size: 14px; }
+
+/* ── KPI Cards (MetricsPanel) ────────────────── */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px; margin-bottom: 24px;
+}
+.kpi-card {
+  background: #fff; border-radius: 14px;
+  padding: 18px; box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+.kpi-label {
+  font-size: 12px; font-weight: 600; color: #888;
+  text-transform: uppercase; letter-spacing: .5px;
+  margin-bottom: 6px;
+}
+.kpi-value {
+  font-size: 26px; font-weight: 700; color: #000;
+}
+.kpi-sub { font-size: 12px; color: #999; margin-top: 2px; }
+
+/* ── Simulation Grid ─────────────────────────── */
+.sim-grid-wrapper {
+  background: #fff; border-radius: 14px;
+  padding: 20px; margin-bottom: 24px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+.sim-grid-wrapper h3 {
+  font-size: 15px; font-weight: 700; margin-bottom: 14px;
+}
+.sim-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 3px; max-width: 500px;
+}
+.grid-cell {
+  aspect-ratio: 1; border-radius: 4px;
+  background: #f0f0f0; position: relative;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+}
+.grid-cell.has-vehicle {
+  background: #e8f5e9;
+}
+
+.vehicle-table { width: 100%; margin-top: 16px; border-collapse: collapse; }
+.vehicle-table th {
+  text-align: left; font-size: 12px; color: #888;
+  padding: 6px 10px; border-bottom: 1px solid #eee;
+  text-transform: uppercase; letter-spacing: .4px;
+}
+.vehicle-table td {
+  font-size: 13px; padding: 8px 10px; border-bottom: 1px solid #f5f5f5;
+}
+
+/* ── Policy Comparison (charts) ──────────────── */
+.comparison-wrapper {
+  background: #fff; border-radius: 14px;
+  padding: 20px; margin-bottom: 24px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+.comparison-wrapper h3 {
+  font-size: 15px; font-weight: 700; margin-bottom: 14px;
+}
+.chart-row {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .dash-body { flex-direction: column; }
+  .dash-sidebar { width: 100%; border-right: none; border-bottom: 1px solid #e8e8e8; }
+  .chart-row { grid-template-columns: 1fr; }
+}
