@@ -580,6 +580,7 @@ tensorboard --logdir outputs/logs
 - Check FastAPI docs: https://fastapi.tiangolo.com
 - Example endpoints in this README
 - Test with Postman or curl
+-starting backend
 
 **For Phase 5 (Frontend):**
 - Check React docs: https://react.dev
