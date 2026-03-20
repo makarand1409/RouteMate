@@ -1,0 +1,23 @@
+{
+  "random": {
+    "avg_reward": 641.8555000000003,
+    "std_reward": 75.44968450729282,
+    "avg_completion": 61.3,
+    "avg_requests": 305.1,
+    "completion_rate": 20.09177318911832
+  },
+  "greedy": {
+    "avg_reward": 921.1730000000009,
+    "std_reward": 107.73053604247966,
+    "avg_completion": 85.5,
+    "avg_requests": 296.5,
+    "completion_rate": 28.836424957841484
+  },
+  "ml": {
+    "avg_reward": 901.1340000000007,
+    "std_reward": 145.03981813281493,
+    "avg_completion": 72.5,
+    "avg_requests": 304.9,
+    "completion_rate": 23.77828796326665
+  }
+}

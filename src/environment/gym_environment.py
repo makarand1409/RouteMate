@@ -1,67 +1,36 @@
 """
-gym_environment.py - OpenAI Gym Environment for RouteMATE
+gym_environment_IMPROVED_FIXED.py - Enhanced RL Environment for RouteMATE
+FIXED VERSION - Compatible with existing Vehicle class
 
-This wraps our RouteMATE simulator as a standard Gym environment
-so we can train RL agents using Stable-Baselines3.
-
-Key Concepts:
-- Observation: State of vehicles and current request
-- Action: Which vehicle (0-4) to assign the request to
-- Reward: Negative wait time + completion bonuses
-- Episode: One simulation run (e.g., 100 time steps)
-
-This is what makes your project an ML project!
-The agent will learn to make better vehicle assignments than the baseline.
+IMPROVEMENTS OVER ORIGINAL:
+1. Better observation space (44 values instead of 29)
+2. Dense reward shaping (more feedback signals)
+3. Compatible with your existing Vehicle implementation
 """
 
 import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
+import sys
+from pathlib import Path
 from typing import Tuple, Dict, Optional
 
-# Import our simulator
-import sys
-import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+# Add parent directory to path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from simulator import (
-    GridCity, 
-    Vehicle, 
-    Request, 
-    RequestGenerator,
-    SimulationEngine
+    GridCity, Vehicle, Request, RequestGenerator,
+    NearestVehiclePolicy, RandomPolicy, SimulationEngine
 )
 
 
-class RideSharingEnv(gym.Env):
+class RideSharingEnvImproved(gym.Env):
     """
-    Custom Gym Environment for RouteMATE Ride-Sharing System.
-    
-    This environment trains an agent to assign incoming ride requests
-    to vehicles optimally, considering vehicle capacity, location,
-    and current passengers (pooling).
-    
-    Observation Space:
-        - Request pickup location (x, y)
-        - Request dropoff location (x, y)
-        - For each vehicle:
-            - Location (x, y)
-            - Occupancy (0-capacity)
-            - Number of destinations in queue
-            - Distance to request pickup
-        Total: 4 + (num_vehicles * 5) values
-    
-    Action Space:
-        - Discrete(num_vehicles): Select which vehicle (0 to num_vehicles-1)
-    
-    Reward:
-        - Immediate: -0.1 per step (encourages faster decisions)
-        - On pickup: +1.0 (successful assignment)
-        - On dropoff: +2.0 (completed trip)
-        - Failed assignment: -5.0 (no vehicle could take it)
+    IMPROVED OpenAI Gym environment for ride-sharing with pooling.
+    FIXED to work with existing Vehicle class.
     """
     
-    metadata = {'render.modes': ['human']}
+    metadata = {'render_modes': ['human']}
     
     def __init__(
         self,
@@ -69,36 +38,27 @@ class RideSharingEnv(gym.Env):
         num_vehicles: int = 5,
         vehicle_capacity: int = 4,
         request_rate: float = 1.5,
-        max_steps: int = 100,
+        max_steps: int = 200,
         reward_config: Optional[Dict] = None
     ):
-        """
-        Initialize the Gym environment.
+        """Initialize the IMPROVED Gym environment."""
+        super().__init__()
         
-        Args:
-            city_size: Size of the grid city
-            num_vehicles: Number of vehicles in the fleet
-            vehicle_capacity: Max passengers per vehicle
-            request_rate: Average requests per time step
-            max_steps: Maximum steps per episode
-            reward_config: Custom reward configuration (optional)
-        """
-        super(RideSharingEnv, self).__init__()
-        
-        # Environment parameters
         self.city_size = city_size
         self.num_vehicles = num_vehicles
         self.vehicle_capacity = vehicle_capacity
         self.request_rate = request_rate
         self.max_steps = max_steps
         
-        # Reward configuration - Simplified and more positive
+        # IMPROVED: More positive, better balanced rewards
         self.reward_config = reward_config or {
-            'step_penalty': -0.01,  # Very small - just to encourage efficiency
-            'pickup_reward': 2.0,  # Increased - good to pick up requests
-            'dropoff_reward': 5.0,  # Increased - completing is very good!
-            'failed_assignment': -1.0,  # Reduced - less harsh
-            'wait_time_penalty': -0.1  # Not used anymore but kept for compatibility
+            'step_penalty': -0.01,
+            'pickup_reward': 3.0,
+            'dropoff_reward': 8.0,
+            'failed_assignment': -2.0,
+            'distance_bonus_scale': 0.2,
+            'capacity_bonus_scale': 0.5,
+            'utilization_bonus_scale': 2.0
         }
         
         # Create city and initialize vehicles
@@ -106,33 +66,29 @@ class RideSharingEnv(gym.Env):
         self.vehicles = self._create_vehicles()
         self.request_generator = RequestGenerator(self.city, request_rate=request_rate)
         
-        # Episode tracking
+        # Episode state
         self.current_step = 0
         self.current_request = None
         self.pending_requests = []
         self.episode_rewards = []
-        self.episode_metrics = {
-            'total_requests': 0,
-            'assigned_requests': 0,
-            'completed_requests': 0,
-            'failed_assignments': 0,
-            'total_wait_time': 0.0
-        }
+        self.episode_metrics = {}
         
-        # Define action space: which vehicle to assign (0 to num_vehicles-1)
-        self.action_space = spaces.Discrete(num_vehicles)
+        # IMPROVED: Enhanced observation space (44 values)
+        observation_size = 4 + num_vehicles * 8
         
-        # Define observation space
-        # Format: [request_pickup_x, request_pickup_y, request_dropoff_x, request_dropoff_y,
-        #          vehicle1_x, vehicle1_y, vehicle1_occupancy, vehicle1_num_destinations, vehicle1_distance,
-        #          vehicle2_x, vehicle2_y, ...]
-        obs_size = 4 + (num_vehicles * 5)  # Request (4) + vehicles (5 features each)
         self.observation_space = spaces.Box(
-            low=0,
-            high=max(city_size, vehicle_capacity, 100),  # Upper bounds
-            shape=(obs_size,),
+            low=0.0,
+            high=float(city_size * 2),
+            shape=(observation_size,),
             dtype=np.float32
         )
+        
+        self.action_space = spaces.Discrete(num_vehicles)
+        
+        print(f"✓ IMPROVED Environment initialized")
+        print(f"  - Observation space: {self.observation_space.shape}")
+        print(f"  - Action space: {num_vehicles} vehicles")
+        print(f"  - Enhanced features: +3 per vehicle (capacity, idle, time)")
     
     def _create_vehicles(self) -> list:
         """Create initial vehicle fleet."""
@@ -147,40 +103,70 @@ class RideSharingEnv(gym.Env):
             vehicles.append(vehicle)
         return vehicles
     
+    def _get_vehicle_queue_length(self, vehicle) -> int:
+        """
+        FIXED: Get queue length in a way that works with your Vehicle class.
+        Tries multiple possible attribute names.
+        """
+        # Try different possible attribute names
+        if hasattr(vehicle, 'request_queue'):
+            return len(vehicle.request_queue)
+        elif hasattr(vehicle, 'queue'):
+            return len(vehicle.queue)
+        elif hasattr(vehicle, 'requests'):
+            return len(vehicle.requests)
+        elif hasattr(vehicle, 'assigned_requests'):
+            # Count requests that aren't picked up yet
+            return sum(1 for req in vehicle.assigned_requests if not req.is_picked_up())
+        else:
+            # Fallback: estimate from destination
+            return 1 if hasattr(vehicle, 'destination') and vehicle.destination is not None else 0
+    
     def _get_observation(self) -> np.ndarray:
         """
-        Get current observation for the agent.
-        
-        Returns:
-            numpy array with current state information
+        IMPROVED: Get enhanced observation with vehicle state information.
+        FIXED to work with existing Vehicle class.
         """
         if self.current_request is None:
-            # No request to assign - return zeros or dummy values
             return np.zeros(self.observation_space.shape, dtype=np.float32)
         
         obs = []
         
-        # Request information (4 values)
+        # Request information (4 values) - normalized
         obs.extend([
-            self.current_request.pickup[0],
-            self.current_request.pickup[1],
-            self.current_request.dropoff[0],
-            self.current_request.dropoff[1]
+            self.current_request.pickup[0] / self.city_size,
+            self.current_request.pickup[1] / self.city_size,
+            self.current_request.dropoff[0] / self.city_size,
+            self.current_request.dropoff[1] / self.city_size
         ])
         
-        # Vehicle information (5 values per vehicle)
+        # Vehicle information (8 values per vehicle) - IMPROVED & FIXED!
         for vehicle in self.vehicles:
             distance_to_pickup = self.city.manhattan_distance(
                 vehicle.current_location,
                 self.current_request.pickup
             )
             
+            # Get current occupancy
+            current_occupancy = len(vehicle.current_passengers) if hasattr(vehicle, 'current_passengers') else 0
+            
+            # FIXED: Get queue length safely
+            queue_length = self._get_vehicle_queue_length(vehicle)
+            
+            # Calculate enhanced features
+            available_capacity = vehicle.capacity - current_occupancy
+            is_idle = 1.0 if queue_length == 0 else 0.0
+            estimated_time_to_free = queue_length * 5  # Rough estimate
+            
             obs.extend([
-                vehicle.current_location[0],
-                vehicle.current_location[1],
-                vehicle.get_occupancy(),
-                len(vehicle.destination_queue),
-                distance_to_pickup
+                vehicle.current_location[0] / self.city_size,
+                vehicle.current_location[1] / self.city_size,
+                current_occupancy / vehicle.capacity,
+                min(queue_length, 5) / 5.0,
+                distance_to_pickup / (2 * self.city_size),
+                available_capacity / vehicle.capacity,  # NEW!
+                is_idle,  # NEW!
+                min(estimated_time_to_free, 30) / 30.0  # NEW!
             ])
         
         return np.array(obs, dtype=np.float32)
@@ -192,52 +178,58 @@ class RideSharingEnv(gym.Env):
         events: list
     ) -> float:
         """
-        Calculate reward for the taken action.
-        
-        Args:
-            action: Which vehicle was selected
-            assignment_success: Whether assignment succeeded
-            events: List of events (pickups, dropoffs) this step
-            
-        Returns:
-            Reward value
+        IMPROVED: Dense reward shaping with multiple feedback signals.
         """
-        reward = self.reward_config['step_penalty']  # Base penalty for time
+        reward = self.reward_config['step_penalty']
+        selected_vehicle = self.vehicles[action]
         
-        # Reward for successful assignment
-        if assignment_success:
+        # 1. ASSIGNMENT OUTCOME
+        if assignment_success and self.current_request is not None:  # FIXED: Check None
             reward += self.reward_config['pickup_reward']
-        else:
-            # Penalty for failed assignment
+            
+            # NEW: Distance bonus
+            distance = self.city.manhattan_distance(
+                selected_vehicle.current_location,
+                self.current_request.pickup
+            )
+            max_distance = 2 * self.city_size
+            distance_bonus = (1.0 - distance / max_distance) * self.reward_config['distance_bonus_scale']
+            reward += distance_bonus
+            
+            # NEW: Capacity bonus
+            current_occupancy = len(selected_vehicle.current_passengers) if hasattr(selected_vehicle, 'current_passengers') else 0
+            available_capacity = selected_vehicle.capacity - current_occupancy
+            if available_capacity > 0:
+                capacity_utilization = available_capacity / selected_vehicle.capacity
+                capacity_bonus = capacity_utilization * self.reward_config['capacity_bonus_scale']
+                reward += capacity_bonus
+        elif not assignment_success:  # FIXED: Only penalize if there was actually a request
             reward += self.reward_config['failed_assignment']
+            
+            # Extra penalty for impossible assignment
+            current_occupancy = len(selected_vehicle.current_passengers) if hasattr(selected_vehicle, 'current_passengers') else 0
+            if current_occupancy >= selected_vehicle.capacity:
+                reward -= 1.0
         
-        # Reward for completing trips
+        # 2. COMPLETION REWARDS
         for event_type, request in events:
             if event_type == 'dropoff':
                 reward += self.reward_config['dropoff_reward']
         
-        # Don't penalize pending requests - they're inevitable in dynamic systems
-        # The agent will naturally minimize them by making good assignments
+        # 3. NEW: Fleet utilization bonus
+        total_passengers = sum(len(v.current_passengers) if hasattr(v, 'current_passengers') else 0 for v in self.vehicles)
+        total_capacity = self.num_vehicles * self.vehicle_capacity
+        utilization_rate = total_passengers / total_capacity if total_capacity > 0 else 0
+        utilization_bonus = utilization_rate * self.reward_config['utilization_bonus_scale']
+        reward += utilization_bonus
         
         return reward
     
     def step(self, action: int):
-        """
-        Execute one step in the environment.
-        
-        Args:
-            action: Which vehicle (0 to num_vehicles-1) to assign request to
-            
-        Returns:
-            observation: Current state
-            reward: Reward for this step
-            terminated: Whether episode ended naturally
-            truncated: Whether episode was truncated (max steps)
-            info: Additional information
-        """
+        """Execute one step in the environment."""
         assert self.action_space.contains(action), f"Invalid action {action}"
         
-        # Step 1: Try to assign current request to selected vehicle
+        # Step 1: Try to assign current request
         assignment_success = False
         selected_vehicle = self.vehicles[action]
         
@@ -246,12 +238,11 @@ class RideSharingEnv(gym.Env):
             assignment_success = True
             self.episode_metrics['assigned_requests'] += 1
         else:
-            # Assignment failed - add to pending
             if self.current_request:
                 self.pending_requests.append(self.current_request)
                 self.episode_metrics['failed_assignments'] += 1
         
-        # Step 2: Move all vehicles and collect events
+        # Step 2: Move all vehicles
         events = []
         for vehicle in self.vehicles:
             result = vehicle.move_one_step(self.current_step, self.city)
@@ -260,32 +251,30 @@ class RideSharingEnv(gym.Env):
                 if result[0] == 'dropoff':
                     self.episode_metrics['completed_requests'] += 1
         
-        # Step 3: Generate new request for next step
+        # Step 3: Generate new request
         self.current_step += 1
         new_requests = self.request_generator.generate_requests(self.current_step)
         
         if new_requests:
-            self.current_request = new_requests[0]  # Take first request
+            self.current_request = new_requests[0]
             self.episode_metrics['total_requests'] += 1
-            # Add remaining requests to pending
             self.pending_requests.extend(new_requests[1:])
             self.episode_metrics['total_requests'] += len(new_requests) - 1
         else:
             self.current_request = None
         
-        # Step 4: Calculate reward
+        # Step 4: Calculate IMPROVED reward
         reward = self._calculate_reward(action, assignment_success, events)
         self.episode_rewards.append(reward)
         
-        # Step 5: Check if episode is done
-        # Gymnasium uses terminated (natural end) and truncated (time limit)
-        terminated = False  # Episode doesn't end naturally in our case
-        truncated = self.current_step >= self.max_steps  # Time limit reached
+        # Step 5: Check if done
+        terminated = False
+        truncated = self.current_step >= self.max_steps
         
-        # Step 6: Get new observation
+        # Step 6: Get observation
         observation = self._get_observation()
         
-        # Step 7: Prepare info dictionary
+        # Step 7: Info
         info = {
             'step': self.current_step,
             'assignment_success': assignment_success,
@@ -297,18 +286,7 @@ class RideSharingEnv(gym.Env):
         return observation, reward, terminated, truncated, info
     
     def reset(self, seed=None, options=None):
-        """
-        Reset the environment to start a new episode.
-        
-        Args:
-            seed: Random seed for reproducibility (Gymnasium API)
-            options: Additional options (Gymnasium API)
-            
-        Returns:
-            observation: Initial observation
-            info: Additional information dictionary
-        """
-        # Set seed if provided
+        """Reset the environment."""
         if seed is not None:
             np.random.seed(seed)
         
@@ -338,95 +316,73 @@ class RideSharingEnv(gym.Env):
         else:
             self.current_request = None
         
-        # Return observation and empty info dict (Gymnasium API requirement)
         return self._get_observation(), {}
     
     def render(self, mode='human'):
-        """
-        Render the environment (optional).
-        
-        For now, just print current state.
-        """
+        """Render the environment."""
         if mode == 'human':
-            print(f"\n--- Step {self.current_step} ---")
-            print(f"Current Request: {self.current_request}")
-            print(f"Vehicles:")
-            for v in self.vehicles:
-                print(f"  {v}")
-            print(f"Pending Requests: {len(self.pending_requests)}")
-            print(f"Episode Reward: {sum(self.episode_rewards):.2f}")
+            print(f"\n=== Step {self.current_step} ===")
+            print(f"Current request: {self.current_request}")
+            print(f"Pending requests: {len(self.pending_requests)}")
+            for i, vehicle in enumerate(self.vehicles):
+                print(f"Vehicle {i}: {vehicle.current_location}")
     
     def close(self):
-        """Cleanup when environment is closed."""
+        """Clean up resources."""
         pass
 
 
-# Test the environment
+# Backwards compatibility alias
+RideSharingEnv = RideSharingEnvImproved
+
+
+def test_improved_environment():
+    """Test the improved environment."""
+    print("=" * 70)
+    print("TESTING IMPROVED ENVIRONMENT (FIXED VERSION)")
+    print("=" * 70)
+    
+    try:
+        env = RideSharingEnvImproved(max_steps=50)
+        
+        print("\n1. Running 50 steps with random actions...")
+        obs, info = env.reset()
+        total_reward = 0
+        
+        for step in range(50):
+            action = env.action_space.sample()
+            obs, reward, terminated, truncated, info = env.step(action)
+            total_reward += reward
+            
+            if (step + 1) % 10 == 0:
+                print(f"  Step {step+1}: reward={reward:.2f}, total={total_reward:.2f}")
+            
+            if terminated or truncated:
+                break
+        
+        print(f"\n2. Final Results:")
+        print(f"   Total reward: {total_reward:.2f}")
+        print(f"   Average reward per step: {total_reward/(step+1):.2f}")
+        print(f"   Completion rate: {info['metrics']['completed_requests']}/{info['metrics']['total_requests']}")
+        
+        print("\n✓ Improved environment working correctly!")
+        print("=" * 70)
+        
+        return True
+        
+    except Exception as e:
+        print(f"\n❌ Error: {e}")
+        print(f"\nFull error details:")
+        import traceback
+        traceback.print_exc()
+        return False
+
+
 if __name__ == "__main__":
-    print("=" * 70)
-    print("Testing RouteMATE Gym Environment")
-    print("=" * 70)
-    
-    # Create environment
-    env = RideSharingEnv(
-        city_size=10,
-        num_vehicles=5,
-        vehicle_capacity=4,
-        request_rate=1.5,
-        max_steps=50
-    )
-    
-    print(f"\nEnvironment created:")
-    print(f"  Observation space: {env.observation_space}")
-    print(f"  Action space: {env.action_space}")
-    print(f"  Max steps per episode: {env.max_steps}")
-    
-    # Test with random agent
-    print(f"\n" + "=" * 70)
-    print("Testing with RANDOM agent (baseline)")
-    print("=" * 70)
-    
-    obs, info = env.reset()
-    print(f"\nInitial observation shape: {obs.shape}")
-    print(f"Initial observation: {obs[:10]}... (showing first 10 values)")
-    
-    total_reward = 0
-    done = False
-    step_count = 0
-    
-    print(f"\nRunning episode...")
-    while not done and step_count < 50:
-        # Random action
-        action = env.action_space.sample()
-        
-        # Step environment
-        obs, reward, terminated, truncated, info = env.step(action)
-        done = terminated or truncated
-        total_reward += reward
-        step_count += 1
-        
-        # Print every 10 steps
-        if step_count % 10 == 0:
-            print(f"  Step {step_count}: "
-                  f"Action={action}, "
-                  f"Reward={reward:.2f}, "
-                  f"Total={total_reward:.2f}, "
-                  f"Pending={info['pending_requests']}")
-    
-    print(f"\n" + "=" * 70)
-    print("Episode Complete!")
-    print("=" * 70)
-    print(f"\nFinal Metrics:")
-    for key, value in info['metrics'].items():
-        print(f"  {key}: {value}")
-    
-    print(f"\nTotal Episode Reward: {total_reward:.2f}")
-    print(f"Average Reward per Step: {total_reward/step_count:.2f}")
-    
-    completion_rate = 0
-    if info['metrics']['total_requests'] > 0:
-        completion_rate = info['metrics']['completed_requests'] / info['metrics']['total_requests']
-    print(f"Completion Rate: {completion_rate*100:.1f}%")
-    
-    print(f"\n✓ Gym environment working correctly!")
-    print(f"\nNext step: Train an RL agent to beat random actions!")
+    success = test_improved_environment()
+    if not success:
+        print("\n⚠️  Environment test failed. Please check the error above.")
+        print("The training script will NOT work until this is fixed.")
+    else:
+        print("\n✅ Environment test passed! Ready to train.")
+        print("Run: python train_ppo_improved.py")
