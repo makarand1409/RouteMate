@@ -1,0 +1,32 @@
+# Node dependencies
+node_modules/
+frontend/node_modules/
+
+# Python environments
+venv/
+.venv/
+env/
+
+# Python cache/bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Frontend env files (keep example)
+frontend/.env
+!.env.example
+!frontend/.env.example
+
+# Build artifacts
+frontend/build/
+
+# ML outputs and training artifacts
+outputs/logs/
+outputs/models/
+outputs/*.npz
+outputs/*.png
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.vscode/
