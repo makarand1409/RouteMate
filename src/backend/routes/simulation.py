@@ -2,6 +2,7 @@
 Simulation endpoints - run the RouteMATE simulator via REST API.
 """
 import sys
+import time
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
@@ -19,9 +20,13 @@ from simulator import (
 )
 from environment.gym_environment import RideSharingEnv
 from backend.utils.model_loader import load_ppo_model
-from backend.models import SimulationRequest, SimulationResult, VehicleState
+from backend.models import SimulationRequest, SimulationResult, VehicleState, VehiclesLiveResponse
 
 router = APIRouter(prefix="/api", tags=["simulation"])
+
+# Module-level state to store the latest simulation for live tracking
+_latest_vehicles = []
+_latest_policy = "greedy"
 
 
 def _run_baseline_simulation(req: SimulationRequest) -> dict:
@@ -128,12 +133,34 @@ async def simulate(req: SimulationRequest):
     - **random**: Random vehicle assignment
     - **ml**: Trained PPO reinforcement learning agent
     """
+    global _latest_vehicles, _latest_policy
     try:
         if req.policy in ("greedy", "random"):
-            return _run_baseline_simulation(req)
+            result = _run_baseline_simulation(req)
         else:
-            return _run_ml_simulation(req)
+            result = _run_ml_simulation(req)
+        
+        # Store the vehicles for live tracking
+        _latest_vehicles = result.vehicles
+        _latest_policy = result.policy
+        
+        return result
     except FileNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Simulation error: {e}")
+
+
+@router.get("/vehicles/live", response_model=VehiclesLiveResponse)
+async def get_live_vehicles():
+    """
+    Get current vehicle positions from the latest simulation.
+    
+    Frontend polls this endpoint every 500ms to update vehicle positions on the map.
+    """
+    global _latest_vehicles, _latest_policy
+    return VehiclesLiveResponse(
+        vehicles=_latest_vehicles or [],
+        policy=_latest_policy,
+        timestamp=time.time()
+    )

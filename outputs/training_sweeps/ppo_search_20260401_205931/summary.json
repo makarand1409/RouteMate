@@ -1,0 +1,196 @@
+{
+  "timestamp": "20260401_205931",
+  "target_completion": 90.0,
+  "total_timesteps_per_config": 500000,
+  "eval_episodes_per_scenario": 20,
+  "best": {
+    "config": {
+      "name": "ppo_fast_updates",
+      "learning_rate": 0.0004,
+      "n_steps": 1024,
+      "batch_size": 64,
+      "n_epochs": 6,
+      "gamma": 0.99,
+      "gae_lambda": 0.95,
+      "clip_range": 0.25
+    },
+    "model_file": "outputs/training_sweeps\\ppo_search_20260401_205931\\models\\ppo_fast_updates.zip",
+    "train_minutes": 5.17,
+    "metrics": {
+      "mean_reward": 319.83333333333456,
+      "std_reward": 78.25709055556707,
+      "mean_completion": 22.910817367456822,
+      "std_completion": 6.265207645893768,
+      "scenarios": [
+        {
+          "scenario": "low",
+          "request_rate": 1.0,
+          "mean_reward": 271.9000000000012,
+          "std_reward": 61.9983064284824,
+          "mean_completion": 29.82063730609334,
+          "std_completion": 3.6674366144955943
+        },
+        {
+          "scenario": "mid",
+          "request_rate": 1.5,
+          "mean_reward": 345.3000000000014,
+          "std_reward": 82.88793639607637,
+          "mean_completion": 22.46753992578094,
+          "std_completion": 3.2335591007683293
+        },
+        {
+          "scenario": "high",
+          "request_rate": 2.0,
+          "mean_reward": 342.3000000000015,
+          "std_reward": 64.86455118167395,
+          "mean_completion": 16.44427487049619,
+          "std_completion": 2.023414544604544
+        }
+      ]
+    },
+    "hits_target": false
+  },
+  "all_results": [
+    {
+      "config": {
+        "name": "ppo_fast_updates",
+        "learning_rate": 0.0004,
+        "n_steps": 1024,
+        "batch_size": 64,
+        "n_epochs": 6,
+        "gamma": 0.99,
+        "gae_lambda": 0.95,
+        "clip_range": 0.25
+      },
+      "model_file": "outputs/training_sweeps\\ppo_search_20260401_205931\\models\\ppo_fast_updates.zip",
+      "train_minutes": 5.17,
+      "metrics": {
+        "mean_reward": 319.83333333333456,
+        "std_reward": 78.25709055556707,
+        "mean_completion": 22.910817367456822,
+        "std_completion": 6.265207645893768,
+        "scenarios": [
+          {
+            "scenario": "low",
+            "request_rate": 1.0,
+            "mean_reward": 271.9000000000012,
+            "std_reward": 61.9983064284824,
+            "mean_completion": 29.82063730609334,
+            "std_completion": 3.6674366144955943
+          },
+          {
+            "scenario": "mid",
+            "request_rate": 1.5,
+            "mean_reward": 345.3000000000014,
+            "std_reward": 82.88793639607637,
+            "mean_completion": 22.46753992578094,
+            "std_completion": 3.2335591007683293
+          },
+          {
+            "scenario": "high",
+            "request_rate": 2.0,
+            "mean_reward": 342.3000000000015,
+            "std_reward": 64.86455118167395,
+            "mean_completion": 16.44427487049619,
+            "std_completion": 2.023414544604544
+          }
+        ]
+      },
+      "hits_target": false
+    },
+    {
+      "config": {
+        "name": "ppo_balanced",
+        "learning_rate": 0.0003,
+        "n_steps": 2048,
+        "batch_size": 64,
+        "n_epochs": 10,
+        "gamma": 0.99,
+        "gae_lambda": 0.95,
+        "clip_range": 0.2
+      },
+      "model_file": "outputs/training_sweeps\\ppo_search_20260401_205931\\models\\ppo_balanced.zip",
+      "train_minutes": 7.44,
+      "metrics": {
+        "mean_reward": 316.866666666668,
+        "std_reward": 77.01481819898186,
+        "mean_completion": 22.515133433526216,
+        "std_completion": 6.098178605380447,
+        "scenarios": [
+          {
+            "scenario": "low",
+            "request_rate": 1.0,
+            "mean_reward": 272.40000000000134,
+            "std_reward": 64.00578098890756,
+            "mean_completion": 29.622552766143325,
+            "std_completion": 4.015167696311139
+          },
+          {
+            "scenario": "mid",
+            "request_rate": 1.5,
+            "mean_reward": 311.55000000000143,
+            "std_reward": 63.13990418111199,
+            "mean_completion": 21.077762485752565,
+            "std_completion": 2.6974962047486857
+          },
+          {
+            "scenario": "high",
+            "request_rate": 2.0,
+            "mean_reward": 366.65000000000157,
+            "std_reward": 72.29472664032973,
+            "mean_completion": 16.845085048682762,
+            "std_completion": 1.853212348220325
+          }
+        ]
+      },
+      "hits_target": false
+    },
+    {
+      "config": {
+        "name": "ppo_stable_small_lr",
+        "learning_rate": 0.0001,
+        "n_steps": 2048,
+        "batch_size": 128,
+        "n_epochs": 10,
+        "gamma": 0.995,
+        "gae_lambda": 0.97,
+        "clip_range": 0.2
+      },
+      "model_file": "outputs/training_sweeps\\ppo_search_20260401_205931\\models\\ppo_stable_small_lr.zip",
+      "train_minutes": 4.87,
+      "metrics": {
+        "mean_reward": 293.4666666666679,
+        "std_reward": 67.53257650118863,
+        "mean_completion": 21.731408721617825,
+        "std_completion": 5.845816666706973,
+        "scenarios": [
+          {
+            "scenario": "low",
+            "request_rate": 1.0,
+            "mean_reward": 250.55000000000118,
+            "std_reward": 56.7243113664679,
+            "mean_completion": 28.60113751124216,
+            "std_completion": 3.530942828810427
+          },
+          {
+            "scenario": "mid",
+            "request_rate": 1.5,
+            "mean_reward": 298.1000000000014,
+            "std_reward": 62.60662904197926,
+            "mean_completion": 20.534954562543344,
+            "std_completion": 2.425949351705236
+          },
+          {
+            "scenario": "high",
+            "request_rate": 2.0,
+            "mean_reward": 331.7500000000014,
+            "std_reward": 56.70791390978864,
+            "mean_completion": 16.05813409106799,
+            "std_completion": 1.8322687448842776
+          }
+        ]
+      },
+      "hits_target": false
+    }
+  ]
+}

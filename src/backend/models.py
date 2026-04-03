@@ -69,6 +69,13 @@ class SimulationResult(BaseModel):
     vehicles: List[VehicleState]
 
 
+class VehiclesLiveResponse(BaseModel):
+    """Live vehicle positions for frontend map updates."""
+    vehicles: List[VehicleState]
+    policy: str
+    timestamp: float
+
+
 class PredictionResult(BaseModel):
     action: int
     vehicle_id: int

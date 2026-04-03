@@ -1,0 +1,205 @@
+{
+  "timestamp": "20260402_150842",
+  "target_completion": 90.0,
+  "total_timesteps_per_config": 2000000,
+  "eval_episodes_per_scenario": 50,
+  "num_vehicles": 14,
+  "vehicle_capacity": 4,
+  "train_request_rate": 0.5,
+  "scenario_profile": "easy",
+  "scenario_rates": [
+    0.4,
+    0.6,
+    0.8
+  ],
+  "best": {
+    "config": {
+      "name": "ppo_balanced",
+      "learning_rate": 0.0003,
+      "n_steps": 2048,
+      "batch_size": 64,
+      "n_epochs": 10,
+      "gamma": 0.99,
+      "gae_lambda": 0.95,
+      "clip_range": 0.2
+    },
+    "model_file": "outputs/training_sweeps\\ppo_search_20260402_150842\\models\\ppo_balanced.zip",
+    "train_minutes": 41.29,
+    "metrics": {
+      "mean_reward": 396.480000000001,
+      "std_reward": 98.24165579494972,
+      "mean_completion": 63.77094142899074,
+      "std_completion": 10.146815573179767,
+      "scenarios": [
+        {
+          "scenario": "easy_low",
+          "request_rate": 0.4,
+          "mean_reward": 280.5000000000007,
+          "std_reward": 49.484644082786104,
+          "mean_completion": 75.01493132041614,
+          "std_completion": 5.250140254528586
+        },
+        {
+          "scenario": "easy_mid",
+          "request_rate": 0.6,
+          "mean_reward": 420.8600000000011,
+          "std_reward": 40.585223912158014,
+          "mean_completion": 63.22851240680175,
+          "std_completion": 4.38950327949054
+        },
+        {
+          "scenario": "easy_high",
+          "request_rate": 0.8,
+          "mean_reward": 488.0800000000013,
+          "std_reward": 49.21456694922753,
+          "mean_completion": 53.069380559754315,
+          "std_completion": 4.560366666719785
+        }
+      ]
+    },
+    "hits_target": false
+  },
+  "all_results": [
+    {
+      "config": {
+        "name": "ppo_balanced",
+        "learning_rate": 0.0003,
+        "n_steps": 2048,
+        "batch_size": 64,
+        "n_epochs": 10,
+        "gamma": 0.99,
+        "gae_lambda": 0.95,
+        "clip_range": 0.2
+      },
+      "model_file": "outputs/training_sweeps\\ppo_search_20260402_150842\\models\\ppo_balanced.zip",
+      "train_minutes": 41.29,
+      "metrics": {
+        "mean_reward": 396.480000000001,
+        "std_reward": 98.24165579494972,
+        "mean_completion": 63.77094142899074,
+        "std_completion": 10.146815573179767,
+        "scenarios": [
+          {
+            "scenario": "easy_low",
+            "request_rate": 0.4,
+            "mean_reward": 280.5000000000007,
+            "std_reward": 49.484644082786104,
+            "mean_completion": 75.01493132041614,
+            "std_completion": 5.250140254528586
+          },
+          {
+            "scenario": "easy_mid",
+            "request_rate": 0.6,
+            "mean_reward": 420.8600000000011,
+            "std_reward": 40.585223912158014,
+            "mean_completion": 63.22851240680175,
+            "std_completion": 4.38950327949054
+          },
+          {
+            "scenario": "easy_high",
+            "request_rate": 0.8,
+            "mean_reward": 488.0800000000013,
+            "std_reward": 49.21456694922753,
+            "mean_completion": 53.069380559754315,
+            "std_completion": 4.560366666719785
+          }
+        ]
+      },
+      "hits_target": false
+    },
+    {
+      "config": {
+        "name": "ppo_stable_small_lr",
+        "learning_rate": 0.0001,
+        "n_steps": 2048,
+        "batch_size": 128,
+        "n_epochs": 10,
+        "gamma": 0.995,
+        "gae_lambda": 0.97,
+        "clip_range": 0.2
+      },
+      "model_file": "outputs/training_sweeps\\ppo_search_20260402_150842\\models\\ppo_stable_small_lr.zip",
+      "train_minutes": 20.86,
+      "metrics": {
+        "mean_reward": 393.480000000001,
+        "std_reward": 103.51745231280269,
+        "mean_completion": 63.297191678274345,
+        "std_completion": 10.065568099708194,
+        "scenarios": [
+          {
+            "scenario": "easy_low",
+            "request_rate": 0.4,
+            "mean_reward": 277.1000000000007,
+            "std_reward": 43.63496304570468,
+            "mean_completion": 74.7869972651867,
+            "std_completion": 5.309418525133935
+          },
+          {
+            "scenario": "easy_mid",
+            "request_rate": 0.6,
+            "mean_reward": 406.1000000000011,
+            "std_reward": 57.00885896069141,
+            "mean_completion": 61.61013683518399,
+            "std_completion": 4.830997262360195
+          },
+          {
+            "scenario": "easy_high",
+            "request_rate": 0.8,
+            "mean_reward": 497.24000000000126,
+            "std_reward": 50.23805728727971,
+            "mean_completion": 53.494440934452385,
+            "std_completion": 4.632797780119862
+          }
+        ]
+      },
+      "hits_target": false
+    },
+    {
+      "config": {
+        "name": "ppo_fast_updates",
+        "learning_rate": 0.0004,
+        "n_steps": 1024,
+        "batch_size": 64,
+        "n_epochs": 6,
+        "gamma": 0.99,
+        "gae_lambda": 0.95,
+        "clip_range": 0.25
+      },
+      "model_file": "outputs/training_sweeps\\ppo_search_20260402_150842\\models\\ppo_fast_updates.zip",
+      "train_minutes": 21.85,
+      "metrics": {
+        "mean_reward": 383.780000000001,
+        "std_reward": 100.25187413044561,
+        "mean_completion": 62.355079162058196,
+        "std_completion": 10.472156454137696,
+        "scenarios": [
+          {
+            "scenario": "easy_low",
+            "request_rate": 0.4,
+            "mean_reward": 269.86000000000075,
+            "std_reward": 51.93149718619729,
+            "mean_completion": 73.31875494541531,
+            "std_completion": 6.526272384116106
+          },
+          {
+            "scenario": "easy_mid",
+            "request_rate": 0.6,
+            "mean_reward": 405.9600000000012,
+            "std_reward": 44.88204986406038,
+            "mean_completion": 61.7276845947394,
+            "std_completion": 5.404061140031954
+          },
+          {
+            "scenario": "easy_high",
+            "request_rate": 0.8,
+            "mean_reward": 475.52000000000123,
+            "std_reward": 59.616185721664536,
+            "mean_completion": 52.01879794601985,
+            "std_completion": 5.455965025569139
+          }
+        ]
+      },
+      "hits_target": false
+    }
+  ]
+}

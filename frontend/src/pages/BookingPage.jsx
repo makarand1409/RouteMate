@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import MapView from '../components/MapView';
@@ -13,6 +13,8 @@ const MUMBAI_VEHICLES = [
   { id: 4, position: [19.0780, 72.8900], status: 'idle', name: 'Vijay R.' },
   { id: 5, position: [19.0850, 72.8750], status: 'idle', name: 'Sneha T.' },
 ];
+
+const POOLER_NAMES = ['Nisha P.', 'Karan D.', 'Meera A.', 'Arjun N.', 'Fatima R.'];
 
 function BookingPage() {
   const location = useLocation();
@@ -30,6 +32,37 @@ function BookingPage() {
   const [tripStatus, setTripStatus] = useState(null);
   const [policy, setPolicy] = useState('greedy');
   const [showPolicyInfo, setShowPolicyInfo] = useState(false);
+  const [rideType, setRideType] = useState('x');
+  const [poolCandidates, setPoolCandidates] = useState([]);
+
+  // Poll /api/vehicles/live every 500ms to get updated vehicle positions
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch('http://localhost:8000/api/vehicles/live');
+        if (response.ok) {
+          const data = await response.json();
+          // Convert backend vehicle format to frontend format
+          const updatedVehicles = data.vehicles.map((v, idx) => ({
+            id: v.vehicle_id,
+            position: [v.location[0], v.location[1]],
+            status: 'active',
+            name: MUMBAI_VEHICLES[idx % MUMBAI_VEHICLES.length].name,
+            occupancy: v.occupancy,
+            queue_length: v.queue_length,
+          }));
+          if (updatedVehicles.length > 0) {
+            setVehicles(updatedVehicles);
+          }
+        }
+      } catch (error) {
+        // Silently fail - backend might not be running yet
+        // Keep using local vehicle data
+      }
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleMapClick = (latlng) => {
     if (selectingMode === 'pickup') {
@@ -75,7 +108,22 @@ function BookingPage() {
       });
     }
 
-    setAssignedVehicle(assigned);
+    const livePoolers = vehicles
+      .filter(v => v.id !== assigned?.id)
+      .slice(0, 2)
+      .map((v, idx) => ({
+        name: POOLER_NAMES[idx] || `Rider ${idx + 1}`,
+        pickupEtaMin: v.id + 2,
+      }));
+
+    const selectedPoolers = rideType === 'pool' ? livePoolers : [];
+    setPoolCandidates(selectedPoolers);
+
+    setAssignedVehicle({
+      ...assigned,
+      rideType,
+      poolers: selectedPoolers,
+    });
     setTripStatus('assigned');
     setTimeout(() => setTripStatus('picking_up'), 2000);
     setTimeout(() => setTripStatus('in_progress'), 5000);
@@ -90,6 +138,8 @@ function BookingPage() {
     setTripStatus(null);
     setAssignedVehicle(null);
     setSelectingMode(null);
+    setRideType('x');
+    setPoolCandidates([]);
   };
 
   const getDistance = () => {
@@ -98,12 +148,6 @@ function BookingPage() {
       Math.pow((pickup.lat - dropoff.lat) * 111, 2) +
       Math.pow((pickup.lng - dropoff.lng) * 111, 2)
     ) * 1000).toFixed(0);
-  };
-
-  const getFare = () => {
-    const dist = getDistance();
-    if (!dist) return null;
-    return (50 + (dist / 1000) * 12).toFixed(0);
   };
 
   return (
@@ -131,7 +175,45 @@ function BookingPage() {
         {/* Left Panel */}
         <div className="booking-left">
 
-          {/* Policy Selector */}
+          {/* Policy Selector - Always Visible */}
+          <div className="policy-panel-always">
+            <h3>🧠 Choose Your Policy</h3>
+            <p>How should we match your ride?</p>
+            <div className="policy-options">
+              <div
+                className={`policy-option ${policy === 'greedy' ? 'active' : ''}`}
+                onClick={() => setPolicy('greedy')}
+              >
+                <span>📍</span>
+                <div>
+                  <p>Greedy</p>
+                  <small>Nearest vehicle</small>
+                </div>
+              </div>
+              <div
+                className={`policy-option ${policy === 'random' ? 'active' : ''}`}
+                onClick={() => setPolicy('random')}
+              >
+                <span>🎲</span>
+                <div>
+                  <p>Random</p>
+                  <small>Random match</small>
+                </div>
+              </div>
+              <div
+                className={`policy-option ${policy === 'ml' ? 'active' : ''}`}
+                onClick={() => setPolicy('ml')}
+              >
+                <span>🤖</span>
+                <div>
+                  <p>ML / AI</p>
+                  <small>Trained PPO 🏆</small>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Policy Selector - Hidden */}
           {showPolicyInfo && (
             <div className="policy-panel">
               <h3>🧠 Assignment Policy</h3>
@@ -227,22 +309,44 @@ function BookingPage() {
               {/* Ride Options */}
               {pickup && dropoff && (
                 <div className="ride-options">
-                  <div className="ride-option selected">
+                  <div
+                    className={`ride-option ${rideType === 'x' ? 'selected' : ''}`}
+                    onClick={() => setRideType('x')}
+                  >
                     <span>🚗</span>
                     <div>
                       <p>RouteMATE X</p>
                       <small>4 seats • {getDistance()}m away</small>
                     </div>
-                    <span className="fare">₹{getFare()}</span>
+                    <span className="fare">₹{(50 + (getDistance() / 1000) * 12).toFixed(0)}</span>
                   </div>
-                  <div className="ride-option">
+                  <div
+                    className={`ride-option ${rideType === 'pool' ? 'selected' : ''}`}
+                    onClick={() => setRideType('pool')}
+                  >
                     <span>🚕</span>
                     <div>
                       <p>RouteMATE Pool</p>
                       <small>Share & save • ML matched</small>
                     </div>
-                    <span className="fare">₹{Math.floor(getFare() * 0.6)}</span>
+                    <span className="fare">₹{Math.floor((50 + (getDistance() / 1000) * 12) * 0.6)}</span>
                   </div>
+
+                  {rideType === 'pool' && (
+                    <div className="pool-preview">
+                      <p className="pool-preview-title">Likely poolers on this route</p>
+                      {poolCandidates.length > 0 ? (
+                        poolCandidates.map((rider, idx) => (
+                          <div className="pooler-row" key={`${rider.name}-${idx}`}>
+                            <span>👤 {rider.name}</span>
+                            <small>pickup in ~{rider.pickupEtaMin} min</small>
+                          </div>
+                        ))
+                      ) : (
+                        <small>Poolers will be matched at booking time.</small>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -252,7 +356,9 @@ function BookingPage() {
                   onClick={handleBookRide}
                   disabled={!pickup || !dropoff}
                 >
-                  Book {policy === 'ml' ? '🤖 ML' : policy === 'greedy' ? '📍 Greedy' : '🎲 Random'} Ride
+                  Book {rideType === 'pool' ? '🚕 Pool' : '🚗 X'} Ride
+                  {' '}
+                  ({policy === 'ml' ? '🤖 ML' : policy === 'greedy' ? '📍 Greedy' : '🎲 Random'})
                 </button>
                 {(pickup || dropoff) && (
                   <button className="reset-btn" onClick={handleReset}>↺</button>
@@ -266,6 +372,8 @@ function BookingPage() {
               pickup={pickup}
               dropoff={dropoff}
               policy={policy}
+              rideType={rideType}
+              poolers={assignedVehicle?.poolers || []}
               onReset={handleReset}
             />
           )}

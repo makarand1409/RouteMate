@@ -1,7 +1,7 @@
 import React from 'react';
 import './TripStatus.css';
 
-function TripStatus({ status, vehicle, pickup, dropoff, policy, onReset }) {
+function TripStatus({ status, vehicle, pickup, dropoff, policy, rideType, poolers, onReset }) {
   const steps = [
     { key: 'assigned', label: 'Driver Assigned', icon: '✅' },
     { key: 'picking_up', label: 'Driver Coming', icon: '🚗' },
@@ -27,6 +27,8 @@ function TripStatus({ status, vehicle, pickup, dropoff, policy, onReset }) {
     ml: '🤖 ML/AI'
   };
 
+  const rideTypeLabel = rideType === 'pool' ? '🚕 RouteMATE Pool' : '🚗 RouteMATE X';
+
   return (
     <div className="trip-status">
 
@@ -51,6 +53,20 @@ function TripStatus({ status, vehicle, pickup, dropoff, policy, onReset }) {
       <div className="policy-badge">
         Assigned via {policyLabels[policy] || policy}
       </div>
+
+      <div className="ride-type-badge">{rideTypeLabel}</div>
+
+      {rideType === 'pool' && poolers?.length > 0 && (
+        <div className="poolers-card">
+          <h4>Your Poolers</h4>
+          {poolers.map((rider, idx) => (
+            <div className="poolers-row" key={`${rider.name}-${idx}`}>
+              <span>👤 {rider.name}</span>
+              <small>joining in ~{rider.pickupEtaMin} min</small>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Progress Steps */}
       <div className="steps">
@@ -93,6 +109,16 @@ function TripStatus({ status, vehicle, pickup, dropoff, policy, onReset }) {
             <span>Policy</span>
             <span>{policyLabels[policy]}</span>
           </div>
+          <div className="summary-row">
+            <span>Ride Type</span>
+            <span>{rideType === 'pool' ? 'Pool' : 'X'}</span>
+          </div>
+          {rideType === 'pool' && (
+            <div className="summary-row">
+              <span>Poolers</span>
+              <span>{poolers?.length || 0}</span>
+            </div>
+          )}
           <div className="summary-row">
             <span>Driver</span>
             <span>{vehicle?.name}</span>

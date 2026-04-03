@@ -1,0 +1,198 @@
+{
+  "timestamp": "20260402_080031",
+  "target_completion": 90.0,
+  "total_timesteps_per_config": 2000000,
+  "eval_episodes_per_scenario": 50,
+  "num_vehicles": 12,
+  "vehicle_capacity": 4,
+  "best": {
+    "config": {
+      "name": "ppo_stable_small_lr",
+      "learning_rate": 0.0001,
+      "n_steps": 2048,
+      "batch_size": 128,
+      "n_epochs": 10,
+      "gamma": 0.995,
+      "gae_lambda": 0.97,
+      "clip_range": 0.2
+    },
+    "model_file": "outputs/training_sweeps\\ppo_search_20260402_080031\\models\\ppo_stable_small_lr.zip",
+    "train_minutes": 63.59,
+    "metrics": {
+      "mean_reward": 636.6333333333347,
+      "std_reward": 99.6384408192385,
+      "mean_completion": 36.02761385575673,
+      "std_completion": 8.740776443824517,
+      "scenarios": [
+        {
+          "scenario": "low",
+          "request_rate": 1.0,
+          "mean_reward": 555.3800000000014,
+          "std_reward": 73.08102079199496,
+          "mean_completion": 46.460879212383006,
+          "std_completion": 4.683980102418638
+        },
+        {
+          "scenario": "mid",
+          "request_rate": 1.5,
+          "mean_reward": 648.9600000000013,
+          "std_reward": 78.02024352692061,
+          "mean_completion": 34.32507325241159,
+          "std_completion": 3.398769009655303
+        },
+        {
+          "scenario": "high",
+          "request_rate": 2.0,
+          "mean_reward": 705.5600000000014,
+          "std_reward": 82.76790682384083,
+          "mean_completion": 27.296889102475593,
+          "std_completion": 2.7811855235732046
+        }
+      ]
+    },
+    "hits_target": false
+  },
+  "all_results": [
+    {
+      "config": {
+        "name": "ppo_stable_small_lr",
+        "learning_rate": 0.0001,
+        "n_steps": 2048,
+        "batch_size": 128,
+        "n_epochs": 10,
+        "gamma": 0.995,
+        "gae_lambda": 0.97,
+        "clip_range": 0.2
+      },
+      "model_file": "outputs/training_sweeps\\ppo_search_20260402_080031\\models\\ppo_stable_small_lr.zip",
+      "train_minutes": 63.59,
+      "metrics": {
+        "mean_reward": 636.6333333333347,
+        "std_reward": 99.6384408192385,
+        "mean_completion": 36.02761385575673,
+        "std_completion": 8.740776443824517,
+        "scenarios": [
+          {
+            "scenario": "low",
+            "request_rate": 1.0,
+            "mean_reward": 555.3800000000014,
+            "std_reward": 73.08102079199496,
+            "mean_completion": 46.460879212383006,
+            "std_completion": 4.683980102418638
+          },
+          {
+            "scenario": "mid",
+            "request_rate": 1.5,
+            "mean_reward": 648.9600000000013,
+            "std_reward": 78.02024352692061,
+            "mean_completion": 34.32507325241159,
+            "std_completion": 3.398769009655303
+          },
+          {
+            "scenario": "high",
+            "request_rate": 2.0,
+            "mean_reward": 705.5600000000014,
+            "std_reward": 82.76790682384083,
+            "mean_completion": 27.296889102475593,
+            "std_completion": 2.7811855235732046
+          }
+        ]
+      },
+      "hits_target": false
+    },
+    {
+      "config": {
+        "name": "ppo_balanced",
+        "learning_rate": 0.0003,
+        "n_steps": 2048,
+        "batch_size": 64,
+        "n_epochs": 10,
+        "gamma": 0.99,
+        "gae_lambda": 0.95,
+        "clip_range": 0.2
+      },
+      "model_file": "outputs/training_sweeps\\ppo_search_20260402_080031\\models\\ppo_balanced.zip",
+      "train_minutes": 85.51,
+      "metrics": {
+        "mean_reward": 619.3266666666681,
+        "std_reward": 83.52185316164602,
+        "mean_completion": 35.88299812527064,
+        "std_completion": 8.976382176766403,
+        "scenarios": [
+          {
+            "scenario": "low",
+            "request_rate": 1.0,
+            "mean_reward": 549.5400000000013,
+            "std_reward": 57.42271675913635,
+            "mean_completion": 46.53107663970738,
+            "std_completion": 3.920836469628246
+          },
+          {
+            "scenario": "mid",
+            "request_rate": 1.5,
+            "mean_reward": 651.0200000000013,
+            "std_reward": 71.62694744298405,
+            "mean_completion": 34.871838191896295,
+            "std_completion": 3.505071498351074
+          },
+          {
+            "scenario": "high",
+            "request_rate": 2.0,
+            "mean_reward": 657.4200000000014,
+            "std_reward": 71.93165923291356,
+            "mean_completion": 26.24607954420825,
+            "std_completion": 2.6064546651519125
+          }
+        ]
+      },
+      "hits_target": false
+    },
+    {
+      "config": {
+        "name": "ppo_fast_updates",
+        "learning_rate": 0.0004,
+        "n_steps": 1024,
+        "batch_size": 64,
+        "n_epochs": 6,
+        "gamma": 0.99,
+        "gae_lambda": 0.95,
+        "clip_range": 0.25
+      },
+      "model_file": "outputs/training_sweeps\\ppo_search_20260402_080031\\models\\ppo_fast_updates.zip",
+      "train_minutes": 263.83,
+      "metrics": {
+        "mean_reward": 597.846666666668,
+        "std_reward": 92.43568839408778,
+        "mean_completion": 34.97323195607081,
+        "std_completion": 8.635612148187636,
+        "scenarios": [
+          {
+            "scenario": "low",
+            "request_rate": 1.0,
+            "mean_reward": 527.7400000000013,
+            "std_reward": 72.52415046038112,
+            "mean_completion": 45.310086969528484,
+            "std_completion": 4.390758657695651
+          },
+          {
+            "scenario": "mid",
+            "request_rate": 1.5,
+            "mean_reward": 612.5600000000013,
+            "std_reward": 73.57259272310579,
+            "mean_completion": 33.4418009819014,
+            "std_completion": 3.115017999610891
+          },
+          {
+            "scenario": "high",
+            "request_rate": 2.0,
+            "mean_reward": 653.2400000000013,
+            "std_reward": 82.22251759706705,
+            "mean_completion": 26.16780791678254,
+            "std_completion": 2.8298317766577927
+          }
+        ]
+      },
+      "hits_target": false
+    }
+  ]
+}
