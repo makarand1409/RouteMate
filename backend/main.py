@@ -747,33 +747,76 @@ async def _recompute_ride_route(ride: Dict[str, Any]) -> None:
     pending_pickups = [r for r in active_riders if r.get("status") == "awaiting_pickup"]
     onboard = [r for r in active_riders if r.get("status") == "onboard"]
 
-    pickup_stops = sorted(pending_pickups, key=lambda r: r.get("joined_at", ""))
-    dropoff_stops = sorted(onboard + pending_pickups, key=lambda r: r.get("joined_at", ""))
+    candidate_stops: List[Dict[str, Any]] = []
+    onboard_ids = {str(r.get("user_id", "")) for r in onboard}
 
-    points: List[Dict[str, float]] = [ride["vehicle_location"]]
-    stops: List[Dict[str, Any]] = []
-
-    for rider in pickup_stops:
-        points.append(rider["pickup"])
-        stops.append(
+    for rider in pending_pickups:
+        candidate_stops.append(
             {
                 "type": "pickup",
                 "user_id": rider["user_id"],
-                "lat": rider["pickup"]["lat"],
-                "lng": rider["pickup"]["lng"],
+                "lat": float(rider["pickup"]["lat"]),
+                "lng": float(rider["pickup"]["lng"]),
+                "joined_at": str(rider.get("joined_at", "")),
             }
         )
 
-    for rider in dropoff_stops:
-        points.append(rider["dropoff"])
-        stops.append(
+    for rider in onboard + pending_pickups:
+        candidate_stops.append(
             {
                 "type": "dropoff",
                 "user_id": rider["user_id"],
-                "lat": rider["dropoff"]["lat"],
-                "lng": rider["dropoff"]["lng"],
+                "lat": float(rider["dropoff"]["lat"]),
+                "lng": float(rider["dropoff"]["lng"]),
+                "joined_at": str(rider.get("joined_at", "")),
             }
         )
+
+    start = ride.get("vehicle_location") or {}
+    current_point = {
+        "lat": float(start.get("lat", 0.0)),
+        "lng": float(start.get("lng", 0.0)),
+    }
+
+    ordered_stops: List[Dict[str, Any]] = []
+    while candidate_stops:
+        feasible = [
+            stop
+            for stop in candidate_stops
+            if stop["type"] == "pickup" or str(stop["user_id"]) in onboard_ids
+        ]
+        if not feasible:
+            feasible = list(candidate_stops)
+
+        next_stop = min(
+            feasible,
+            key=lambda stop: (
+                haversine_km(current_point["lat"], current_point["lng"], stop["lat"], stop["lng"]),
+                stop.get("joined_at", ""),
+            ),
+        )
+
+        candidate_stops.remove(next_stop)
+        ordered_stops.append(
+            {
+                "type": next_stop["type"],
+                "user_id": next_stop["user_id"],
+                "lat": next_stop["lat"],
+                "lng": next_stop["lng"],
+            }
+        )
+
+        if next_stop["type"] == "pickup":
+            onboard_ids.add(str(next_stop["user_id"]))
+
+        current_point = {"lat": next_stop["lat"], "lng": next_stop["lng"]}
+
+    points: List[Dict[str, float]] = [current_point if not ordered_stops else ride["vehicle_location"]]
+    stops: List[Dict[str, Any]] = []
+
+    for stop in ordered_stops:
+        points.append({"lat": stop["lat"], "lng": stop["lng"]})
+        stops.append(stop)
 
     ride["route"] = await compose_osrm_route(points, stops)
     ride["savings"] = _calculate_savings(ride)

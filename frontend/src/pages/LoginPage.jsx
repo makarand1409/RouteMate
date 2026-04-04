@@ -17,7 +17,7 @@ function LoginPage() {
     setLoading(true);
     try {
       await login(email, password);
-      navigate('/dashboard');
+      navigate('/book');
     } catch (err) {
       setError(err.response?.data?.detail || err.message || 'Login failed');
     } finally {

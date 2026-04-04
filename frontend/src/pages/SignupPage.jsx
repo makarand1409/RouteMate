@@ -25,7 +25,7 @@ function SignupPage() {
     setLoading(true);
     try {
       await signup(name, email, password);
-      navigate('/dashboard');
+      navigate('/book');
     } catch (err) {
       setError(err.response?.data?.detail || err.message || 'Signup failed');
     } finally {
