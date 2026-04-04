@@ -1,9 +1,9 @@
 import React, { useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import SimulationGrid from '../components/SimulationGrid';
 import MetricsPanel from '../components/MetricsPanel';
 import PolicyComparison from '../components/PolicyComparison';
+import RouteAnalysisMap from '../components/RouteAnalysisMap';
 import { runSimulation } from '../services/api';
 import './DashboardPage.css';
 
@@ -15,7 +15,9 @@ const POLICIES = [
 
 function DashboardPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout } = useAuth();
+  const routeContext = location.state?.routeContext || null;
 
   // Simulation controls
   const [policy, setPolicy] = useState('greedy');
@@ -123,7 +125,7 @@ function DashboardPage() {
 
         {/* ─── Main content ─── */}
         <main className="dash-main">
-          {!results && !loading && (
+          {!results && !loading && !routeContext && (
             <div className="dash-empty">
               <span>🚀</span>
               <h3>Run a simulation to see results</h3>
@@ -131,13 +133,48 @@ function DashboardPage() {
             </div>
           )}
 
+          {routeContext && (
+            <>
+              <RouteAnalysisMap
+                routeGeometry={routeContext.routeGeometry}
+                pickup={routeContext.pickup}
+                dropoff={routeContext.dropoff}
+                vehicleLocation={routeContext.vehicleLocation}
+              />
+
+              {routeContext.comparison && (
+                <div className="comparison-wrapper">
+                  <h3>📈 ML vs Greedy (This Completed Route)</h3>
+                  <div className="ride-analysis-grid">
+                    <div className="ride-analysis-card">
+                      <h4>Greedy</h4>
+                      <p>Cost: ₹{routeContext.comparison.greedy.estimated_cost}</p>
+                      <p>Distance: {routeContext.comparison.greedy.distance_km} km</p>
+                      <p>Duration: {routeContext.comparison.greedy.duration_min} min</p>
+                    </div>
+                    <div className="ride-analysis-card">
+                      <h4>ML</h4>
+                      <p>Cost: ₹{routeContext.comparison.rl.estimated_cost}</p>
+                      <p>Distance: {routeContext.comparison.rl.distance_km} km</p>
+                      <p>Duration: {routeContext.comparison.rl.duration_min} min</p>
+                    </div>
+                    <div className="ride-analysis-card">
+                      <h4>Outcome</h4>
+                      <p>Winner: {String(routeContext.comparison.winner || '').toUpperCase()}</p>
+                      <p>Cost Gain: {routeContext.comparison.improvement.cost_percent}%</p>
+                      <p>Time Gain: {routeContext.comparison.improvement.time_percent}%</p>
+                      <p>Distance Gain: {routeContext.comparison.improvement.distance_percent}%</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
           {results && (
             <>
               {/* KPI Cards */}
               <MetricsPanel result={results} />
-
-              {/* Grid + vehicles */}
-              <SimulationGrid vehicles={results.vehicles} />
 
               {/* Policy comparison (if multiple runs exist) */}
               {history.length > 1 && (

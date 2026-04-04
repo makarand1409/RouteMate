@@ -455,10 +455,21 @@ def load_ml_model() -> bool:
         ml_model = None
         return False
 
-    candidate_paths = [
-        Path("outputs/models/dqn_routemate_improved.zip"),
-        Path("outputs/models/dqn_routemate_final.zip"),
-    ]
+    explicit_path = os.getenv("ML_MODEL_PATH")
+    candidate_paths = []
+    if explicit_path:
+        candidate_paths.append(Path(explicit_path))
+
+    candidate_paths.extend(
+        [
+            Path("outputs/models/dqn_routemate_40000_steps.zip"),
+            Path("outputs/models/dqn_routemate_final.zip"),
+            Path("outputs/models/dqn_routemate_100000_steps.zip"),
+            Path("outputs/models/dqn_routemate_80000_steps.zip"),
+            Path("outputs/models/dqn_routemate_60000_steps.zip"),
+            Path("outputs/models/dqn_routemate_20000_steps.zip"),
+        ]
+    )
 
     path = next((p for p in candidate_paths if p.exists()), None)
     if path is None:

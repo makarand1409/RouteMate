@@ -183,8 +183,54 @@
   display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
 }
 
+.route-map-wrapper {
+  background: #fff;
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+
+.route-map-wrapper h3 {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.route-map-box {
+  height: 360px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #ececec;
+}
+
+.ride-analysis-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ride-analysis-card {
+  border: 1px solid #ececec;
+  border-radius: 10px;
+  padding: 12px;
+  background: #fafafa;
+}
+
+.ride-analysis-card h4 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+}
+
+.ride-analysis-card p {
+  margin: 4px 0;
+  font-size: 13px;
+}
+
 @media (max-width: 900px) {
   .dash-body { flex-direction: column; }
   .dash-sidebar { width: 100%; border-right: none; border-bottom: 1px solid #e8e8e8; }
   .chart-row { grid-template-columns: 1fr; }
+  .ride-analysis-grid { grid-template-columns: 1fr; }
+  .route-map-box { height: 300px; }
 }

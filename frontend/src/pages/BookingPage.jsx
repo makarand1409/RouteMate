@@ -293,9 +293,26 @@ function BookingPage() {
     if (!currentRideId || !authUserId) return;
     setCompareLoading(true);
     try {
-      const comparison = await api.getRideComparison(currentRideId, authUserId);
+      const [comparison, rideState] = await Promise.all([
+        api.getRideComparison(currentRideId, authUserId),
+        api.getRideState(currentRideId),
+      ]);
       setComparisonData(comparison);
-      navigate('/dashboard');
+
+      const ride = rideState?.ride || {};
+      const me = (ride.riders || []).find((r) => r.user_id === authUserId);
+      navigate('/dashboard', {
+        state: {
+          routeContext: {
+            rideId: currentRideId,
+            routeGeometry: ride?.route?.geometry || routeGeometry || [],
+            pickup: me?.pickup || pickup,
+            dropoff: me?.dropoff || dropoff,
+            vehicleLocation: ride?.vehicle_location || liveVehiclePosition,
+            comparison,
+          },
+        },
+      });
     } catch (error) {
       alert(error.message || 'Failed to compare ride policies');
     } finally {
