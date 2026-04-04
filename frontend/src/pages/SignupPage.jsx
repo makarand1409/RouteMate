@@ -27,7 +27,7 @@ function SignupPage() {
       await signup(name, email, password);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.detail || 'Signup failed');
+      setError(err.response?.data?.detail || err.message || 'Signup failed');
     } finally {
       setLoading(false);
     }

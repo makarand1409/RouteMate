@@ -19,9 +19,9 @@ function DashboardPage() {
 
   // Simulation controls
   const [policy, setPolicy] = useState('greedy');
-  const [numSteps, setNumSteps] = useState(100);
-  const [numVehicles, setNumVehicles] = useState(5);
-  const [requestRate, setRequestRate] = useState(2.0);
+  const numSteps = 120;
+  const numVehicles = 5;
+  const requestRate = 2.0;
 
   // Simulation results
   const [results, setResults] = useState(null);
@@ -108,29 +108,6 @@ function DashboardPage() {
                 </div>
               ))}
             </div>
-          </div>
-
-          {/* Sliders */}
-          <div className="ctrl-group">
-            <label>Time Steps: <strong>{numSteps}</strong></label>
-            <input
-              type="range" min={10} max={500} step={10} value={numSteps}
-              onChange={e => setNumSteps(Number(e.target.value))}
-            />
-          </div>
-          <div className="ctrl-group">
-            <label>Vehicles: <strong>{numVehicles}</strong></label>
-            <input
-              type="range" min={1} max={15} value={numVehicles}
-              onChange={e => setNumVehicles(Number(e.target.value))}
-            />
-          </div>
-          <div className="ctrl-group">
-            <label>Request Rate (λ): <strong>{requestRate}</strong></label>
-            <input
-              type="range" min={0.5} max={5} step={0.5} value={requestRate}
-              onChange={e => setRequestRate(Number(e.target.value))}
-            />
           </div>
 
           {/* Actions */}

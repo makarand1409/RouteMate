@@ -24,7 +24,7 @@ function LandingPage() {
           <div className="nav-links">
             <a href="/book">Ride</a>
             <a href="/dashboard">Dashboard</a>
-            <a href="#">About</a>
+            <a href="/#about">About</a>
           </div>
         </div>
         <div className="nav-right">

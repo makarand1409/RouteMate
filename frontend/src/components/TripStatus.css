@@ -230,3 +230,40 @@
   background: #222;
   transform: translateY(-1px);
 }
+
+.compare-btn {
+  width: 100%;
+  margin-top: 12px;
+  padding: 11px;
+  background: #f0f0f0;
+  color: #000;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.compare-btn:hover {
+  background: #e7e7e7;
+}
+
+.compare-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.comparison-card {
+  margin-top: 12px;
+  background: #fff;
+  border: 1px solid #ececec;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.comparison-card h4 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+}
