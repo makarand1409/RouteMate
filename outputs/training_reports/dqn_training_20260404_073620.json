@@ -1,15 +1,15 @@
 {
-  "timestamp": "2026-04-04T07:37:11.700999+00:00",
-  "timesteps": 0,
+  "timestamp": "2026-04-04T07:36:20.007200+00:00",
+  "timesteps": 80000,
   "episodes": 20,
   "request_rate": 1.5,
   "max_steps": 200,
-  "init_model": "c:\\drsp-sim\\drsp-sim\\outputs\\models\\dqn_routemate_final.zip",
+  "init_model": "outputs\\models\\dqn_routemate_final.zip",
   "trained": {
-    "mean_reward": 1247.7409999999948,
-    "std_reward": 144.520882886348,
-    "mean_completion": 25.30586147300362,
-    "std_completion": 2.7629929992175417
+    "mean_reward": 1221.2961249999948,
+    "std_reward": 130.44638730737773,
+    "mean_completion": 24.950464879463503,
+    "std_completion": 2.032345721026753
   },
   "greedy": {
     "mean_reward": 1196.9423749999976,
@@ -18,8 +18,8 @@
     "std_completion": 1.9219662080333364
   },
   "delta": {
-    "reward": 50.79862499999717,
-    "completion": -3.210223212199246
+    "reward": 24.353749999997262,
+    "completion": -3.565619805739363
   },
   "promoted_to_final": false,
   "model_path": "C:\\drsp-sim\\drsp-sim\\outputs\\models\\dqn_routemate_improved.zip"

@@ -1,0 +1,25 @@
+{
+  "timestamp": "2026-04-04T07:34:09.092242Z",
+  "timesteps": 120000,
+  "episodes": 15,
+  "request_rate": 1.5,
+  "max_steps": 200,
+  "trained": {
+    "mean_reward": 1156.92533333333,
+    "std_reward": 117.69530325826503,
+    "mean_completion": 23.759135299961194,
+    "std_completion": 2.17446311942438
+  },
+  "greedy": {
+    "mean_reward": 1190.4816666666645,
+    "std_reward": 97.31734295449085,
+    "mean_completion": 28.306609478652778,
+    "std_completion": 1.8421867921330761
+  },
+  "delta": {
+    "reward": -33.55633333333458,
+    "completion": -4.5474741786915835
+  },
+  "promoted_to_final": false,
+  "model_path": "C:\\drsp-sim\\drsp-sim\\outputs\\models\\dqn_routemate_improved.zip"
+}

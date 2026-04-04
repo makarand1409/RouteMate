@@ -462,8 +462,9 @@ def load_ml_model() -> bool:
 
     candidate_paths.extend(
         [
-            Path("outputs/models/dqn_routemate_40000_steps.zip"),
+            Path("outputs/models/dqn_routemate_improved.zip"),
             Path("outputs/models/dqn_routemate_final.zip"),
+            Path("outputs/models/dqn_routemate_40000_steps.zip"),
             Path("outputs/models/dqn_routemate_100000_steps.zip"),
             Path("outputs/models/dqn_routemate_80000_steps.zip"),
             Path("outputs/models/dqn_routemate_60000_steps.zip"),
