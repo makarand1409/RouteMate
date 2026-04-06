@@ -93,11 +93,10 @@ function ReplayModal({
   const [stepIndex, setStepIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [manualMode, setManualMode] = useState(false);
-  const [demoMode, setDemoMode] = useState(true);
 
   const replayData = useMemo(
-    () => buildReplayData(battleSnapshot, comparison, ridersServed, demoMode),
-    [battleSnapshot, comparison, ridersServed, demoMode]
+    () => buildReplayData(battleSnapshot, comparison, ridersServed, true),
+    [battleSnapshot, comparison, ridersServed]
   );
 
   useEffect(() => {
@@ -165,14 +164,6 @@ function ReplayModal({
             <p className="replay-step-indicator">Step {stepIndex + 1} of 5: {STEP_TITLES[stepIndex]}</p>
           </div>
           <div className="replay-header-actions">
-            <label className="demo-toggle">
-              <input
-                type="checkbox"
-                checked={demoMode}
-                onChange={(e) => setDemoMode(e.target.checked)}
-              />
-              Demo Mode: {demoMode ? 'ON' : 'OFF'}
-            </label>
             <button className="replay-close-btn" onClick={onClose} aria-label="Close replay">
               Exit Replay
             </button>
