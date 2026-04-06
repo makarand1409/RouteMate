@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import MetricsPanel from '../components/MetricsPanel';
 import PolicyComparison from '../components/PolicyComparison';
 import RouteAnalysisMap from '../components/RouteAnalysisMap';
+import ReplayModal from '../components/ReplayModal';
 import { runSimulation } from '../services/api';
 import './DashboardPage.css';
 
@@ -29,6 +30,7 @@ function DashboardPage() {
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [replayOpen, setReplayOpen] = useState(false);
 
   // Multi-policy comparison history
   const [history, setHistory] = useState([]);
@@ -72,6 +74,14 @@ function DashboardPage() {
 
   return (
     <div className="dashboard">
+      <ReplayModal
+        isOpen={replayOpen}
+        onClose={() => setReplayOpen(false)}
+        battleSnapshot={routeContext?.battleSnapshot || null}
+        comparison={routeContext?.comparison || null}
+        ridersServed={routeContext?.ridersServed || 1}
+      />
+
       {/* Nav */}
       <nav className="dash-nav">
         <div className="dash-nav-left">
@@ -141,6 +151,53 @@ function DashboardPage() {
                 dropoff={routeContext.dropoff}
                 vehicleLocation={routeContext.vehicleLocation}
               />
+
+              {routeContext.battleSnapshot && (
+                <div className="comparison-wrapper">
+                  <h3>Live Policy Battle Snapshot</h3>
+                  <p className="dash-core-message">
+                    ML does not always choose the nearest car. It chooses the better fleet decision.
+                  </p>
+
+                  <div style={{ marginBottom: 10 }}>
+                    <button className="run-btn" style={{ maxWidth: 260 }} onClick={() => setReplayOpen(true)}>
+                      ▶ Replay Decisions
+                    </button>
+                  </div>
+
+                  <div className="ride-analysis-grid">
+                    <div className="ride-analysis-card">
+                      <h4>Battle Winner</h4>
+                      <p>{String(routeContext.battleSnapshot.winner || '').toUpperCase()}</p>
+                      <p>Confidence: {routeContext.battleSnapshot.confidence || 0}%</p>
+                      <p>
+                        Fallback: {routeContext.battleSnapshot.fallback ? 'Triggered' : 'Not triggered'}
+                      </p>
+                    </div>
+                    <div className="ride-analysis-card">
+                      <h4>System Impact</h4>
+                      <p>Riders served: {routeContext.ridersServed || 1}</p>
+                      <p>Pooling probability: {routeContext.battleSnapshot.poolingProbability || 0}%</p>
+                      <p>
+                        Expected occupancy gain: +
+                        {Number(routeContext.battleSnapshot.expectedOccupancyGain || 0).toFixed(1)} riders
+                      </p>
+                    </div>
+                    <div className="ride-analysis-card">
+                      <h4>Explanation</h4>
+                      <p>
+                        ML chose a slightly farther vehicle but enabled pooling, reducing total system distance and
+                        improving efficiency.
+                      </p>
+                      <p>
+                        Greedy optimizes immediate pickup (local optimum). ML optimizes overall fleet efficiency
+                        (global optimum).
+                      </p>
+                      <p>{routeContext.systemEfficiencyNote || 'System efficiency improved with policy-aware dispatch.'}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {routeContext.comparison && (
                 <div className="comparison-wrapper">

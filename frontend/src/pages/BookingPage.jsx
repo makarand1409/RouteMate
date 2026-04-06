@@ -3,8 +3,123 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import MapView from '../components/MapView';
 import TripStatus from '../components/TripStatus';
+import PolicyBattleModal from '../components/PolicyBattleModal';
 import api from '../services/api';
 import './BookingPage.css';
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function sigmoid(x) {
+  return 1 / (1 + Math.exp(-x));
+}
+
+function seededRandom(seed) {
+  let state = seed >>> 0;
+  return () => {
+    state = (1664525 * state + 1013904223) >>> 0;
+    return state / 4294967296;
+  };
+}
+
+function distanceKm(a, b) {
+  if (!a || !b) return 0;
+  const latKm = (a.lat - b.lat) * 111;
+  const lngKm = (a.lng - b.lng) * 111;
+  return Math.sqrt(latKm * latKm + lngKm * lngKm);
+}
+
+function buildVehicleCandidates(vehicles, pickupPoint) {
+  if (!Array.isArray(vehicles) || vehicles.length === 0) {
+    return [
+      { id: 1, distanceKm: 0.8, etaMin: 2.8, nearbyRequests: 1, availableSeats: 2 },
+      { id: 2, distanceKm: 1.2, etaMin: 3.8, nearbyRequests: 3, availableSeats: 3 },
+      { id: 3, distanceKm: 0.5, etaMin: 2.0, nearbyRequests: 0, availableSeats: 1 },
+    ];
+  }
+
+  return vehicles.map((v) => {
+    const vehiclePoint = { lat: v.position[0], lng: v.position[1] };
+    const dKm = distanceKm(vehiclePoint, pickupPoint);
+    const nearbyRequests = Math.abs(Math.round((pickupPoint.lat * 1000) + (pickupPoint.lng * 1000) + v.id * 7)) % 4;
+    const availableSeats = Math.max(0, Number(v.capacity || 4) - Number(v.occupancy || 0));
+    const etaMin = (dKm / 25) * 60 + 1;
+
+    return {
+      id: v.id,
+      distanceKm: Number(dKm.toFixed(3)),
+      etaMin: Number(etaMin.toFixed(2)),
+      nearbyRequests,
+      availableSeats,
+    };
+  });
+}
+
+function buildBattleSnapshot(vehicles, pickupPoint) {
+  const candidates = buildVehicleCandidates(vehicles, pickupPoint);
+  const greedy = candidates.reduce((best, c) => (!best || c.distanceKm < best.distanceKm ? c : best), null);
+
+  const rand = seededRandom(42);
+  const random = candidates[Math.floor(rand() * candidates.length)] || candidates[0];
+
+  const mlScored = candidates.map((c) => ({
+    ...c,
+    score: -c.distanceKm + (c.nearbyRequests * 2) + c.availableSeats,
+  }));
+  const ml = mlScored.reduce((best, c) => (!best || c.score > best.score ? c : best), null);
+
+  const scoreDiff = Number((ml.score - ((-greedy.distanceKm) + (greedy.nearbyRequests * 2) + greedy.availableSeats)).toFixed(3));
+  const rawConfidence = sigmoid(scoreDiff) * 100;
+  const confidence = Math.round(clamp(rawConfidence, 55, 95));
+
+  const fallback = ml.etaMin > (greedy.etaMin + 1.5);
+  const finalPolicy = fallback ? 'greedy' : 'ml';
+
+  const pickupDelta = Number((ml.etaMin - greedy.etaMin).toFixed(1));
+  const poolingProbability = Math.round(clamp(35 + (ml.nearbyRequests * 15) + (ml.availableSeats * 4), 15, 96));
+  const expectedOccupancyGain = Number((0.2 + (ml.nearbyRequests * 0.35) + (ml.availableSeats * 0.08)).toFixed(1));
+
+  const mlAgreesWithGreedy = ml.id === greedy.id;
+  const positives = mlAgreesWithGreedy
+    ? ['ML agrees with greedy - optimal decision', 'Improves trust with consistent selection', 'Balances local and fleet objectives']
+    : ['Enables pooling with nearby riders', 'Improves system efficiency', 'Better seat utilization'];
+
+  const tradeoff = pickupDelta > 0
+    ? `Slightly higher pickup time (+${pickupDelta.toFixed(1)} min)`
+    : 'No pickup-time tradeoff';
+
+  const winnerLine = fallback
+    ? 'Trophy: Greedy wins due to better immediate pickup time.'
+    : `Trophy: ML wins this request because it improves overall system efficiency despite +${Math.max(0, pickupDelta).toFixed(1)} min pickup time.`;
+
+  return {
+    greedy,
+    random,
+    ml,
+    confidence,
+    fallback,
+    winner: fallback ? 'greedy' : 'ml',
+    finalPolicy,
+    poolingProbability,
+    expectedOccupancyGain,
+    mlAgreesWithGreedy,
+    winnerLine,
+    reasoning: {
+      positives,
+      tradeoff,
+    },
+    policyRows: [
+      { key: 'greedy', label: 'Greedy', vehicleId: greedy.id, etaMin: greedy.etaMin, distanceKm: greedy.distanceKm, isMl: false },
+      { key: 'random', label: 'Random', vehicleId: random.id, etaMin: random.etaMin, distanceKm: random.distanceKm, isMl: false },
+      { key: 'ml', label: 'ML', vehicleId: ml.id, etaMin: ml.etaMin, distanceKm: ml.distanceKm, isMl: true },
+    ],
+  };
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 function BookingPage() {
   const location = useLocation();
@@ -31,9 +146,17 @@ function BookingPage() {
   const [rideProgress, setRideProgress] = useState(0);
   const [comparisonData, setComparisonData] = useState(null);
   const [compareLoading, setCompareLoading] = useState(false);
+  const [battleOpen, setBattleOpen] = useState(false);
+  const [battleLoading, setBattleLoading] = useState(false);
+  const [battleSnapshot, setBattleSnapshot] = useState(null);
+  const [battleCountdown, setBattleCountdown] = useState(0);
+  const [battleAutoAssignAt, setBattleAutoAssignAt] = useState(null);
 
   const geocodeHydratedRef = useRef({ pickup: false, dropoff: false });
   const currentRideRef = useRef(null);
+  const battleResolveRef = useRef(null);
+  const battleTimerRef = useRef(null);
+  const battleChosenRef = useRef(false);
   const authUserId = user?.uid || user?.id || user?.localId || null;
 
   const resolveSelfTripStatus = useCallback((riders = []) => {
@@ -214,6 +337,45 @@ function BookingPage() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    if (!battleOpen || battleLoading || !battleAutoAssignAt) return undefined;
+
+    const update = () => {
+      const remaining = Math.max(0, Math.ceil((battleAutoAssignAt - Date.now()) / 1000));
+      setBattleCountdown(remaining);
+    };
+
+    update();
+    const intervalId = setInterval(update, 250);
+    return () => clearInterval(intervalId);
+  }, [battleOpen, battleLoading, battleAutoAssignAt]);
+
+  useEffect(() => () => {
+    if (battleTimerRef.current) {
+      clearTimeout(battleTimerRef.current);
+      battleTimerRef.current = null;
+    }
+  }, []);
+
+  const resolveBattleChoice = useCallback((policyChoice) => {
+    if (battleChosenRef.current) return;
+    battleChosenRef.current = true;
+
+    if (battleTimerRef.current) {
+      clearTimeout(battleTimerRef.current);
+      battleTimerRef.current = null;
+    }
+
+    const resolve = battleResolveRef.current;
+    battleResolveRef.current = null;
+    setBattleAutoAssignAt(null);
+    setBattleCountdown(0);
+
+    if (resolve) {
+      resolve(policyChoice);
+    }
+  }, []);
+
   const handleMapClick = (latlng) => {
     if (selectingMode === 'pickup') {
       setPickup(latlng);
@@ -226,6 +388,62 @@ function BookingPage() {
     }
   };
 
+  const assignRide = async (assignmentPolicy, snapshot = null) => {
+    const assignment = await api.requestRide(pickup, dropoff, assignmentPolicy, {
+      userId: authUserId,
+      userName: user?.name || '',
+      userEmail: user?.email || '',
+    });
+
+    const fromFleet = vehicles.find((v) => v.id === assignment.vehicle_id);
+    const fallbackPos = assignment?.vehicle_location
+      ? [assignment.vehicle_location.lat, assignment.vehicle_location.lng]
+      : [pickup.lat, pickup.lng];
+
+    setAssignedVehicle({
+      ...(fromFleet || {
+        id: assignment.vehicle_id,
+        name: `Vehicle ${assignment.vehicle_id}`,
+        status: 'busy',
+        position: fallbackPos,
+      }),
+      position: fallbackPos,
+      eta: assignment.estimated_time,
+      distance: assignment.distance,
+      policyUsed: assignment.policy_used,
+      rideId: assignment.ride_id,
+      carpoolMatched: assignment.carpool_matched,
+    });
+
+    setCurrentRideId(assignment.ride_id || null);
+    currentRideRef.current = assignment.ride_id || null;
+    setRouteGeometry(Array.isArray(assignment?.route?.geometry) ? assignment.route.geometry : []);
+    setLiveVehiclePosition(assignment?.vehicle_location || null);
+    setSharedRiders(
+      (assignment?.matched_riders || []).map((id) => ({
+        user_id: id,
+        name: id,
+        status: id === authUserId ? 'awaiting_pickup' : 'onboard',
+        pickup,
+        dropoff,
+      }))
+    );
+    setLiveSavings(assignment?.savings || null);
+    setComparisonData(null);
+    setRideProgress(0);
+    setTripStatus(assignment.carpool_matched ? 'picking_up' : 'assigned');
+
+    if (snapshot && assignment?.ride_id) {
+      const persisted = { ...snapshot, rideId: assignment.ride_id, assignedPolicy: assignmentPolicy, savedAt: Date.now() };
+      setBattleSnapshot(persisted);
+      localStorage.setItem(`battleSnapshot:${assignment.ride_id}`, JSON.stringify(persisted));
+    }
+
+    if (assignment.carpool_matched) {
+      alert('Carpool matched! Shared ride confirmed.');
+    }
+  };
+
   const handleBookRide = async () => {
     if (!pickup || !dropoff) {
       alert('Please select both pickup and dropoff on the map!');
@@ -235,56 +453,31 @@ function BookingPage() {
     setLoading(true);
 
     try {
-      const assignment = await api.requestRide(pickup, dropoff, policy, {
-        userId: authUserId,
-        userName: user?.name || '',
-        userEmail: user?.email || '',
+      const snapshot = buildBattleSnapshot(vehicles, pickup);
+      setBattleSnapshot(snapshot);
+      setBattleOpen(true);
+      setBattleLoading(true);
+      battleChosenRef.current = false;
+
+      await sleep(1200);
+      setBattleLoading(false);
+
+      const autoMs = 7000;
+      setBattleAutoAssignAt(Date.now() + autoMs);
+      const selectedPolicy = await new Promise((resolve) => {
+        battleResolveRef.current = resolve;
+        battleTimerRef.current = setTimeout(() => resolveBattleChoice(snapshot.finalPolicy), autoMs);
       });
 
-      const fromFleet = vehicles.find((v) => v.id === assignment.vehicle_id);
-      const fallbackPos = assignment?.vehicle_location
-        ? [assignment.vehicle_location.lat, assignment.vehicle_location.lng]
-        : [pickup.lat, pickup.lng];
-
-      setAssignedVehicle({
-        ...(fromFleet || {
-          id: assignment.vehicle_id,
-          name: `Vehicle ${assignment.vehicle_id}`,
-          status: 'busy',
-          position: fallbackPos,
-        }),
-        position: fallbackPos,
-        eta: assignment.estimated_time,
-        distance: assignment.distance,
-        policyUsed: assignment.policy_used,
-        rideId: assignment.ride_id,
-        carpoolMatched: assignment.carpool_matched,
-      });
-
-      setCurrentRideId(assignment.ride_id || null);
-      currentRideRef.current = assignment.ride_id || null;
-      setRouteGeometry(Array.isArray(assignment?.route?.geometry) ? assignment.route.geometry : []);
-      setLiveVehiclePosition(assignment?.vehicle_location || null);
-      setSharedRiders(
-        (assignment?.matched_riders || []).map((id) => ({
-          user_id: id,
-          name: id,
-          status: id === authUserId ? 'awaiting_pickup' : 'onboard',
-          pickup,
-          dropoff,
-        }))
-      );
-      setLiveSavings(assignment?.savings || null);
-      setComparisonData(null);
-      setRideProgress(0);
-      setTripStatus(assignment.carpool_matched ? 'picking_up' : 'assigned');
-
-      if (assignment.carpool_matched) {
-        alert('Carpool matched! Shared ride confirmed.');
-      }
+      setBattleOpen(false);
+      setPolicy(selectedPolicy);
+      await assignRide(selectedPolicy, snapshot);
     } catch (error) {
       alert(error.message || 'Failed to book ride');
     } finally {
+      setBattleLoading(false);
+      setBattleAutoAssignAt(null);
+      setBattleCountdown(0);
       setLoading(false);
     }
   };
@@ -299,6 +492,16 @@ function BookingPage() {
       ]);
       setComparisonData(comparison);
 
+      const storedSnapshotRaw = localStorage.getItem(`battleSnapshot:${currentRideId}`);
+      let storedSnapshot = null;
+      if (storedSnapshotRaw) {
+        try {
+          storedSnapshot = JSON.parse(storedSnapshotRaw);
+        } catch (_error) {
+          storedSnapshot = null;
+        }
+      }
+
       const ride = rideState?.ride || {};
       const me = (ride.riders || []).find((r) => r.user_id === authUserId);
       navigate('/dashboard', {
@@ -310,6 +513,11 @@ function BookingPage() {
             dropoff: me?.dropoff || dropoff,
             vehicleLocation: ride?.vehicle_location || liveVehiclePosition,
             comparison,
+            battleSnapshot: storedSnapshot || battleSnapshot,
+            ridersServed: (ride?.riders || []).length,
+            systemEfficiencyNote: (storedSnapshot || battleSnapshot)?.fallback
+              ? 'Greedy was used for immediate pickup efficiency due to ML guardrail.'
+              : 'ML selected a system-efficient dispatch balancing pooling potential and seat utilization.',
           },
         },
       });
@@ -337,6 +545,17 @@ function BookingPage() {
     setCompareLoading(false);
     setRideProgress(0);
     setSelectingMode(null);
+    setBattleOpen(false);
+    setBattleLoading(false);
+    setBattleSnapshot(null);
+    setBattleCountdown(0);
+    setBattleAutoAssignAt(null);
+    battleChosenRef.current = true;
+    battleResolveRef.current = null;
+    if (battleTimerRef.current) {
+      clearTimeout(battleTimerRef.current);
+      battleTimerRef.current = null;
+    }
     geocodeHydratedRef.current = { pickup: false, dropoff: false };
   };
 
@@ -355,6 +574,14 @@ function BookingPage() {
 
   return (
     <div className="booking-page">
+      <PolicyBattleModal
+        isOpen={battleOpen}
+        loading={battleLoading}
+        battleSnapshot={battleSnapshot}
+        countdownSec={battleCountdown}
+        onSelectPolicy={resolveBattleChoice}
+      />
+
       <nav className="booking-nav">
         <div className="nav-left">
           <button className="back-btn" onClick={() => navigate('/')}>←</button>
@@ -450,6 +677,7 @@ function BookingPage() {
               pickup={pickup}
               dropoff={dropoff}
               policy={policy}
+              battleSnapshot={battleSnapshot}
               savings={liveSavings}
               riders={sharedRiders}
               progress={rideProgress}

@@ -179,6 +179,13 @@
 .comparison-wrapper h3 {
   font-size: 15px; font-weight: 700; margin-bottom: 14px;
 }
+
+.dash-core-message {
+  margin: -4px 0 10px 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #065f46;
+}
 .chart-row {
   display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
 }

@@ -15,6 +15,7 @@ function TripStatus({
   comparisonData = null,
   compareLoading = false,
   onCompare,
+  battleSnapshot = null,
 }) {
   const steps = [
     { key: 'assigned', label: 'Driver Assigned', icon: '✅' },
@@ -40,6 +41,12 @@ function TripStatus({
     ml: '🤖 ML/AI',
   };
 
+  const resolvedPolicyBadge = (() => {
+    if (battleSnapshot?.fallback) return '🚗 Policy: Greedy (ML fallback)';
+    if (String(policy || '').toLowerCase() === 'ml') return '🚗 Policy: ML (Optimized)';
+    return `Assigned via ${policyLabels[policy] || policy}`;
+  })();
+
   return (
     <div className="trip-status">
       {vehicle && (
@@ -56,7 +63,7 @@ function TripStatus({
         </div>
       )}
 
-      <div className="policy-badge">Assigned via {policyLabels[policy] || policy}</div>
+      <div className="policy-badge">{resolvedPolicyBadge}</div>
 
       {rideId && (
         <div className="policy-badge" style={{ marginTop: 8 }}>
