@@ -181,6 +181,36 @@
   margin-bottom: 15px;
 }
 
+/* Trip Actions */
+.trip-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.cancel-ride-btn {
+  flex: 1;
+  padding: 12px 14px;
+  background: #ffebee;
+  color: #d32f2f;
+  border: 1px solid #ef5350;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.cancel-ride-btn:hover {
+  background: #ffcdd2;
+  border-color: #c62828;
+}
+
+.cancel-ride-btn:active {
+  transform: scale(0.98);
+}
+
 /* Trip Summary */
 .trip-summary {
   background: #f8f8f8;

@@ -47,10 +47,19 @@ const sharedRiderIcon = new L.DivIcon({
   iconAnchor: [10, 10],
 });
 
-function MapClickHandler({ onMapClick, selectingMode }) {
+function MapEvents({ onMapClick, selectingMode, onMapMove, onCursorMove, onMapZoom }) {
   useMapEvents({
     click: (e) => {
       if (selectingMode) onMapClick(e.latlng);
+    },
+    moveend: (e) => {
+      if (onMapMove) onMapMove(e.target.getCenter());
+    },
+    zoomend: (e) => {
+      if (onMapZoom) onMapZoom(e.target.getZoom());
+    },
+    mousemove: (e) => {
+      if (onCursorMove) onCursorMove(e.latlng);
     },
   });
   return null;
@@ -63,6 +72,9 @@ function MapView({
   assignedVehicle,
   onMapClick,
   selectingMode,
+  onMapMove,
+  onCursorMove,
+  onMapZoom,
   center: centerProp,
   routeGeometry = [],
   sharedRiders = [],
@@ -82,7 +94,13 @@ function MapView({
     <MapContainer center={center} zoom={13} style={{ height: '100%', width: '100%' }} className={selectingMode ? 'map-selecting' : ''}>
       <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
-      <MapClickHandler onMapClick={onMapClick} selectingMode={selectingMode} />
+      <MapEvents
+        onMapClick={onMapClick}
+        selectingMode={selectingMode}
+        onMapMove={onMapMove}
+        onCursorMove={onCursorMove}
+        onMapZoom={onMapZoom}
+      />
 
       {pickup && (
         <Marker position={[pickup.lat, pickup.lng]} icon={pickupIcon}>

@@ -51,14 +51,34 @@ class RouteMATEAPI {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        pickup: { x: pickupGrid.x, y: pickupGrid.y, lat: pickup.lat, lng: pickup.lng },
-        dropoff: { x: dropoffGrid.x, y: dropoffGrid.y, lat: dropoff.lat, lng: dropoff.lng },
+        pickup: {
+          x: pickupGrid.x,
+          y: pickupGrid.y,
+          lat: pickup.lat,
+          lng: pickup.lng,
+          address: pickup.address || pickup.label || null,
+        },
+        dropoff: {
+          x: dropoffGrid.x,
+          y: dropoffGrid.y,
+          lat: dropoff.lat,
+          lng: dropoff.lng,
+          address: dropoff.address || dropoff.label || null,
+        },
         policy,
         user_id: userContext?.userId,
         user_name: userContext?.userName,
         user_email: userContext?.userEmail,
       }),
     });
+  }
+
+  async reverseGeocode(lat, lng) {
+    return await jsonFetch(`${API_BASE_URL}/geo/reverse?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`);
+  }
+
+  async getUserRouteSuggestion(userId) {
+    return await jsonFetch(`${API_BASE_URL}/users/${encodeURIComponent(userId)}/route-suggestion`);
   }
 
   async getRideState(rideId) {
@@ -68,6 +88,14 @@ class RouteMATEAPI {
   async getRideComparison(rideId, userId) {
     const query = buildQuery({ user_id: userId });
     return await jsonFetch(`${API_BASE_URL}/rides/${encodeURIComponent(rideId)}/comparison?${query}`);
+  }
+
+  async cancelRide(rideId, userId) {
+    return await jsonFetch(`${API_BASE_URL}/rides/${encodeURIComponent(rideId)}/cancel`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: userId }),
+    });
   }
 
   async geocodeAddress(address) {

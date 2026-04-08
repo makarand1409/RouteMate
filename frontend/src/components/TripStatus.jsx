@@ -16,6 +16,7 @@ function TripStatus({
   compareLoading = false,
   onCompare,
   battleSnapshot = null,
+  onCancel = null,
 }) {
   const steps = [
     { key: 'assigned', label: 'Driver Assigned', icon: '✅' },
@@ -96,6 +97,14 @@ function TripStatus({
         {status === 'in_progress' && `🛣️ Heading to your destination...`}
         {status === 'completed' && `🎉 You have arrived! Great ride!`}
       </div>
+
+      {status !== 'completed' && onCancel && (
+        <div className="trip-actions">
+          <button className="cancel-ride-btn" onClick={onCancel}>
+            ❌ Cancel Ride
+          </button>
+        </div>
+      )}
 
       {status === 'completed' && (
         <div className="trip-summary">

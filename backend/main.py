@@ -13,6 +13,7 @@ Features:
 from __future__ import annotations
 
 import asyncio
+import json
 import math
 import os
 import random
@@ -82,6 +83,7 @@ current_policy = "greedy"
 active_rides: Dict[str, Dict[str, Any]] = {}
 ride_history: List[Dict[str, Any]] = []
 ride_tasks: Dict[str, asyncio.Task] = {}
+user_route_history: Dict[str, List[Dict[str, Any]]] = {}
 
 mongo_client = None
 mongo_db = None
@@ -89,6 +91,8 @@ users_col = None
 ride_requests_col = None
 active_rides_col = None
 ride_history_col = None
+user_route_history_col = None
+USER_ROUTE_HISTORY_FILE = Path(__file__).parent / "user_route_history.json"
 
 
 class ConnectionManager:
@@ -231,7 +235,7 @@ def _parse_iso_utc(ts: str) -> Optional[datetime]:
 
 
 def init_mongo() -> None:
-    global mongo_client, mongo_db, users_col, ride_requests_col, active_rides_col, ride_history_col
+    global mongo_client, mongo_db, users_col, ride_requests_col, active_rides_col, ride_history_col, user_route_history_col
 
     mongo_uri = os.getenv("MONGODB_URI")
     db_name = os.getenv("MONGODB_DB", "routemate")
@@ -247,6 +251,7 @@ def init_mongo() -> None:
         ride_requests_col = mongo_db["ride_requests"]
         active_rides_col = mongo_db["active_rides"]
         ride_history_col = mongo_db["ride_history"]
+        user_route_history_col = mongo_db["user_route_history"]
     except Exception:
         mongo_client = None
         mongo_db = None
@@ -254,6 +259,7 @@ def init_mongo() -> None:
         ride_requests_col = None
         active_rides_col = None
         ride_history_col = None
+        user_route_history_col = None
 
 
 def _serialize_for_mongo(doc: Dict[str, Any]) -> Dict[str, Any]:
@@ -279,6 +285,66 @@ def db_upsert(col, filter_doc: Dict[str, Any], update_doc: Dict[str, Any]) -> No
         col.update_one(filter_doc, {"$set": update_doc}, upsert=True)
     except PyMongoError:
         pass
+
+
+def db_push_user_route_history(col, filter_doc: Dict[str, Any], route_doc: Dict[str, Any], max_len: int = 10) -> None:
+    if col is None:
+        return
+    try:
+        col.update_one(
+            filter_doc,
+            {"$push": {"routes": {"$each": [route_doc], "$position": 0, "$slice": max_len}}},
+            upsert=True,
+        )
+    except PyMongoError:
+        pass
+
+
+def _load_user_route_history_file() -> None:
+    global user_route_history
+    if not USER_ROUTE_HISTORY_FILE.exists():
+        return
+    try:
+        with USER_ROUTE_HISTORY_FILE.open("r", encoding="utf-8") as fp:
+            data = json.load(fp)
+        if isinstance(data, dict):
+            user_route_history = {k: v for k, v in data.items() if isinstance(v, list)}
+    except Exception:
+        user_route_history = {}
+
+
+def _persist_user_route_history_file() -> None:
+    try:
+        with USER_ROUTE_HISTORY_FILE.open("w", encoding="utf-8") as fp:
+            json.dump(user_route_history, fp, default=str, indent=2)
+    except Exception:
+        pass
+
+
+def _record_user_route_history(user_id: str, pickup: Dict[str, float], dropoff: Dict[str, float], pickup_label: str, dropoff_label: str) -> None:
+    if not user_id:
+        return
+
+    entry = {
+        "pickup": pickup,
+        "dropoff": dropoff,
+        "pickup_label": pickup_label,
+        "dropoff_label": dropoff_label,
+        "updated_at": now_iso(),
+    }
+
+    history = user_route_history.setdefault(user_id, [])
+    history.insert(0, entry)
+    user_route_history[user_id] = history[:10]
+    _persist_user_route_history_file()
+
+    if user_route_history_col is not None:
+        db_push_user_route_history(
+            user_route_history_col,
+            {"user_id": user_id},
+            {**entry, "user_id": user_id},
+            max_len=10,
+        )
 
 
 def grid_to_latlng(x: float, y: float) -> Dict[str, float]:
@@ -1082,6 +1148,7 @@ async def startup_event() -> None:
     init_vehicles()
     load_ml_model()
     init_mongo()
+    _load_user_route_history_file()
 
 
 @app.on_event("shutdown")
@@ -1174,6 +1241,55 @@ async def route(pickup_lat: float, pickup_lng: float, dropoff_lat: float, dropof
     return RouteResponse(**route_data)
 
 
+async def reverse_geocode_address(lat: float, lng: float) -> str:
+    params = {
+        "lat": lat,
+        "lon": lng,
+        "format": "jsonv2",
+        "addressdetails": 0,
+    }
+    headers = {"User-Agent": "RouteMATE/3.0"}
+
+    async with httpx.AsyncClient(timeout=12.0, headers=headers) as client:
+        res = await client.get("https://nominatim.openstreetmap.org/reverse", params=params)
+
+    if res.status_code != 200:
+        return f"{lat:.4f}, {lng:.4f}"
+
+    payload = res.json()
+    return payload.get("display_name") or payload.get("name") or f"{lat:.4f}, {lng:.4f}"
+
+
+@app.get("/api/geo/reverse", response_model=GeocodeResponse)
+async def reverse_geocode(lat: float, lng: float):
+    address = await reverse_geocode_address(lat, lng)
+    return GeocodeResponse(address=address, lat=lat, lng=lng)
+
+
+@app.get("/api/users/{user_id}/route-suggestion")
+async def get_user_route_suggestion(user_id: str):
+    history = user_route_history.get(user_id, [])
+    if not history and user_route_history_col is not None:
+        try:
+            doc = user_route_history_col.find_one({"user_id": user_id})
+            if doc and isinstance(doc.get("routes"), list):
+                history = doc.get("routes", [])
+                user_route_history[user_id] = history[:10]
+        except PyMongoError:
+            history = []
+
+    if not history:
+        raise HTTPException(status_code=404, detail="No commute suggestions available")
+
+    return {"suggestion": history[0]}
+
+
+@app.get("/api/geo/route", response_model=RouteResponse)
+async def route(pickup_lat: float, pickup_lng: float, dropoff_lat: float, dropoff_lng: float):
+    route_data = await osrm_route({"lat": pickup_lat, "lng": pickup_lng}, {"lat": dropoff_lat, "lng": dropoff_lng})
+    return RouteResponse(**route_data)
+
+
 @app.post("/api/request-ride", response_model=AssignmentResponse)
 async def request_ride(request: RideRequest):
     pickup_grid, pickup_latlng = await resolve_location(request.pickup)
@@ -1201,11 +1317,16 @@ async def request_ride(request: RideRequest):
         },
     )
 
+    pickup_label = request.pickup.address or f"Pickup {pickup_latlng['lat']:.4f}, {pickup_latlng['lng']:.4f}"
+    dropoff_label = request.dropoff.address or f"Dropoff {dropoff_latlng['lat']:.4f}, {dropoff_latlng['lng']:.4f}"
+
     req_doc = {
         "request_id": uuid.uuid4().hex,
         "user_id": rider_id,
         "pickup": pickup_latlng,
         "dropoff": dropoff_latlng,
+        "pickup_label": pickup_label,
+        "dropoff_label": dropoff_label,
         "pickup_grid": {"x": pickup_grid[0], "y": pickup_grid[1]},
         "dropoff_grid": {"x": dropoff_grid[0], "y": dropoff_grid[1]},
         "policy": policy,
@@ -1213,6 +1334,7 @@ async def request_ride(request: RideRequest):
         "created_at": now_iso(),
     }
     db_insert(ride_requests_col, req_doc)
+    _record_user_route_history(rider_id, pickup_latlng, dropoff_latlng, pickup_label, dropoff_label)
 
     solo_route = await osrm_route(pickup_latlng, dropoff_latlng)
     pool_match = _find_pool_match(pickup_latlng, dropoff_latlng)

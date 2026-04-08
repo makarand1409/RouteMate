@@ -212,6 +212,10 @@
   padding: 13px 0;
 }
 
+.input-row.input-wrapper {
+  position: relative;
+}
+
 .dot {
   width: 10px;
   height: 10px;
@@ -359,7 +363,19 @@
 /* Action Buttons */
 .action-buttons {
   display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.button-group {
+  display: flex;
   gap: 10px;
+}
+
+.policy-badge-container {
+  display: flex;
+  justify-content: center;
+  padding-top: 4px;
 }
 
 .book-btn {

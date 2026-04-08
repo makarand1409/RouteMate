@@ -16,8 +16,10 @@ function LandingPage() {
   };
 
   return (
+    
     <div className="landing">
       {/* Navbar */}
+    
       <nav className="navbar">
         <div className="nav-left">
           <div className="logo">RouteMATE</div>

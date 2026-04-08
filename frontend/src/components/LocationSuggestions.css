@@ -1,0 +1,93 @@
+.location-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-height: 320px;
+  overflow-y: auto;
+  z-index: 100;
+  margin-top: 4px;
+}
+
+.location-suggestions::-webkit-scrollbar {
+  width: 6px;
+}
+
+.location-suggestions::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.location-suggestions::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 10px;
+}
+
+.location-suggestions::-webkit-scrollbar-thumb:hover {
+  background: #888;
+}
+
+.suggestion-section {
+  padding: 12px 8px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.suggestion-section:last-child {
+  border-bottom: none;
+}
+
+.suggestion-section h4 {
+  margin: 0 0 8px 12px;
+  font-size: 12px;
+  color: #999;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.2s;
+  border-radius: 6px;
+}
+
+.suggestion-item:hover {
+  background-color: #f5f5f5;
+}
+
+.suggestion-item:active {
+  background-color: #efefef;
+}
+
+.suggestion-icon {
+  font-size: 18px;
+  min-width: 24px;
+  text-align: center;
+}
+
+.suggestion-text {
+  flex: 1;
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
+}
+
+.suggestion-text small {
+  display: block;
+  font-size: 12px;
+  color: #999;
+  margin-top: 2px;
+  font-weight: 400;
+}

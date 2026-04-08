@@ -4,6 +4,12 @@ import { useAuth } from '../context/AuthContext';
 import MapView from '../components/MapView';
 import TripStatus from '../components/TripStatus';
 import PolicyBattleModal from '../components/PolicyBattleModal';
+import LocationSuggestions from '../components/LocationSuggestions';
+import PoolingSuggestion from '../components/PoolingSuggestion';
+import CarTypeSelection from '../components/CarTypeSelection';
+import CancelRideModal from '../components/CancelRideModal';
+import AIDecisionBadge from '../components/AIDecisionBadge';
+import DailyCommuteSuggestion from '../components/DailyCommuteSuggestion';
 import api from '../services/api';
 import './BookingPage.css';
 
@@ -30,7 +36,7 @@ function distanceKm(a, b) {
   return Math.sqrt(latKm * latKm + lngKm * lngKm);
 }
 
-function buildVehicleCandidates(vehicles, pickupPoint) {
+function buildVehicleCandidates(vehicles, pickupPoint, carType = 'sedan') {
   if (!Array.isArray(vehicles) || vehicles.length === 0) {
     return [
       { id: 1, distanceKm: 0.8, etaMin: 2.8, nearbyRequests: 1, availableSeats: 2 },
@@ -39,7 +45,11 @@ function buildVehicleCandidates(vehicles, pickupPoint) {
     ];
   }
 
-  return vehicles.map((v) => {
+  const requiredSeats = carType === 'mini' ? 3 : carType === 'suv' ? 6 : 4;
+  const eligibleVehicles = vehicles.filter((v) => Number(v.capacity || 4) >= requiredSeats);
+  const source = eligibleVehicles.length > 0 ? eligibleVehicles : vehicles;
+
+  return source.map((v) => {
     const vehiclePoint = { lat: v.position[0], lng: v.position[1] };
     const dKm = distanceKm(vehiclePoint, pickupPoint);
     const nearbyRequests = Math.abs(Math.round((pickupPoint.lat * 1000) + (pickupPoint.lng * 1000) + v.id * 7)) % 4;
@@ -56,8 +66,8 @@ function buildVehicleCandidates(vehicles, pickupPoint) {
   });
 }
 
-function buildBattleSnapshot(vehicles, pickupPoint) {
-  const candidates = buildVehicleCandidates(vehicles, pickupPoint);
+function buildBattleSnapshot(vehicles, pickupPoint, carType = 'sedan') {
+  const candidates = buildVehicleCandidates(vehicles, pickupPoint, carType);
   const greedy = candidates.reduce((best, c) => (!best || c.distanceKm < best.distanceKm ? c : best), null);
 
   const rand = seededRandom(42);
@@ -152,11 +162,25 @@ function BookingPage() {
   const [battleCountdown, setBattleCountdown] = useState(0);
   const [battleAutoAssignAt, setBattleAutoAssignAt] = useState(null);
 
+  // New feature states
+  const [carType, setCarType] = useState('sedan');
+  const [showPickupSuggestions, setShowPickupSuggestions] = useState(false);
+  const [showDropoffSuggestions, setShowDropoffSuggestions] = useState(false);
+  const [showPoolingSuggestion, setShowPoolingSuggestion] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [mapCenter, setMapCenter] = useState({ lat: 19.0760, lng: 72.8777 });
+  const [mapZoom, setMapZoom] = useState(13);
+  const [mapCursorLocation, setMapCursorLocation] = useState(null);
+  const [lastMapClickLocation, setLastMapClickLocation] = useState(null);
+  const [dailyCommuteSuggestion, setDailyCommuteSuggestion] = useState(null);
+
   const geocodeHydratedRef = useRef({ pickup: false, dropoff: false });
   const currentRideRef = useRef(null);
   const battleResolveRef = useRef(null);
   const battleTimerRef = useRef(null);
   const battleChosenRef = useRef(false);
+  const cursorUpdateRef = useRef(null);
+  const lastCursorPositionRef = useRef(null);
   const authUserId = user?.uid || user?.id || user?.localId || null;
 
   const resolveSelfTripStatus = useCallback((riders = []) => {
@@ -355,6 +379,10 @@ function BookingPage() {
       clearTimeout(battleTimerRef.current);
       battleTimerRef.current = null;
     }
+    if (cursorUpdateRef.current) {
+      clearTimeout(cursorUpdateRef.current);
+      cursorUpdateRef.current = null;
+    }
   }, []);
 
   const resolveBattleChoice = useCallback((policyChoice) => {
@@ -376,16 +404,56 @@ function BookingPage() {
     }
   }, []);
 
-  const handleMapClick = (latlng) => {
-    if (selectingMode === 'pickup') {
-      setPickup(latlng);
-      setPickupText(`${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)}`);
-      setSelectingMode(null);
-    } else if (selectingMode === 'dropoff') {
-      setDropoff(latlng);
-      setDropoffText(`${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)}`);
-      setSelectingMode(null);
+  const handleMapClick = async (latlng) => {
+    const fallbackLabel = `${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)}`;
+    let address = fallbackLabel;
+    try {
+      const response = await api.reverseGeocode(latlng.lat, latlng.lng, mapZoom);
+      address = response.address || fallbackLabel;
+    } catch (_error) {
+      address = fallbackLabel;
     }
+
+    const location = {
+      lat: latlng.lat,
+      lng: latlng.lng,
+      address,
+    };
+
+    if (selectingMode === 'pickup') {
+      setPickup(location);
+      setPickupText(address);
+      setSelectingMode(null);
+      setLastMapClickLocation(location);
+    } else if (selectingMode === 'dropoff') {
+      setDropoff(location);
+      setDropoffText(address);
+      setSelectingMode(null);
+      setLastMapClickLocation(location);
+    } else {
+      setLastMapClickLocation(location);
+    }
+  };
+
+  const handleMapMove = (center) => {
+    setMapCenter(center);
+  };
+
+  const handleCursorMove = (cursor) => {
+    const last = lastCursorPositionRef.current;
+    if (last && Math.abs(cursor.lat - last.lat) < 0.00015 && Math.abs(cursor.lng - last.lng) < 0.00015) {
+      return;
+    }
+    lastCursorPositionRef.current = cursor;
+
+    if (cursorUpdateRef.current) {
+      clearTimeout(cursorUpdateRef.current);
+    }
+
+    cursorUpdateRef.current = setTimeout(() => {
+      setMapCursorLocation(cursor);
+      cursorUpdateRef.current = null;
+    }, 180);
   };
 
   const assignRide = async (assignmentPolicy, snapshot = null) => {
@@ -453,7 +521,7 @@ function BookingPage() {
     setLoading(true);
 
     try {
-      const snapshot = buildBattleSnapshot(vehicles, pickup);
+      const snapshot = buildBattleSnapshot(vehicles, pickup, carType);
       setBattleSnapshot(snapshot);
       setBattleOpen(true);
       setBattleLoading(true);
@@ -550,6 +618,11 @@ function BookingPage() {
     setBattleSnapshot(null);
     setBattleCountdown(0);
     setBattleAutoAssignAt(null);
+    setShowPickupSuggestions(false);
+    setShowDropoffSuggestions(false);
+    setShowPoolingSuggestion(false);
+    setShowCancelModal(false);
+    setCarType('sedan');
     battleChosenRef.current = true;
     battleResolveRef.current = null;
     if (battleTimerRef.current) {
@@ -558,6 +631,36 @@ function BookingPage() {
     }
     geocodeHydratedRef.current = { pickup: false, dropoff: false };
   };
+
+  const handleMapZoom = (zoom) => {
+    setMapZoom(zoom);
+  };
+
+  useEffect(() => {
+    if (!authUserId) {
+      setDailyCommuteSuggestion(null);
+      return undefined;
+    }
+
+    let cancelled = false;
+    const loadSuggestion = async () => {
+      try {
+        const data = await api.getUserRouteSuggestion(authUserId);
+        if (!cancelled) {
+          setDailyCommuteSuggestion(data?.suggestion || null);
+        }
+      } catch (_error) {
+        if (!cancelled) {
+          setDailyCommuteSuggestion(null);
+        }
+      }
+    };
+
+    loadSuggestion();
+    return () => {
+      cancelled = true;
+    };
+  }, [authUserId]);
 
   const getDistance = () => {
     if (!pickup || !dropoff) return null;
@@ -570,6 +673,76 @@ function BookingPage() {
     const dist = getDistance();
     if (!dist) return null;
     return (50 + (dist / 1000) * 12).toFixed(0);
+  };
+
+  const handleLocationSelect = (location, type) => {
+    const isCoords = typeof location === 'object' && location !== null && typeof location.lat === 'number' && typeof location.lng === 'number';
+    if (type === 'pickup') {
+      setShowPickupSuggestions(false);
+      if (isCoords) {
+        setPickup({ lat: location.lat, lng: location.lng, address: location.address || location.label });
+        setPickupText(location.label || location.address || `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`);
+        geocodeHydratedRef.current.pickup = true;
+      } else {
+        setPickupText(location);
+        setPickup(null);
+        geocodeHydratedRef.current.pickup = false;
+      }
+    } else if (type === 'dropoff') {
+      setShowDropoffSuggestions(false);
+      if (isCoords) {
+        setDropoff({ lat: location.lat, lng: location.lng, address: location.address || location.label });
+        setDropoffText(location.label || location.address || `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`);
+        geocodeHydratedRef.current.dropoff = true;
+      } else {
+        setDropoffText(location);
+        setDropoff(null);
+        geocodeHydratedRef.current.dropoff = false;
+      }
+    }
+  };
+
+  const handleAcceptDailySuggestion = () => {
+    if (!dailyCommuteSuggestion) return;
+    setPickup({
+      ...dailyCommuteSuggestion.pickup,
+      address: dailyCommuteSuggestion.pickup_label,
+    });
+    setDropoff({
+      ...dailyCommuteSuggestion.dropoff,
+      address: dailyCommuteSuggestion.dropoff_label,
+    });
+    setPickupText(dailyCommuteSuggestion.pickup_label);
+    setDropoffText(dailyCommuteSuggestion.dropoff_label);
+    setDailyCommuteSuggestion(null);
+    setShowPickupSuggestions(false);
+    setShowDropoffSuggestions(false);
+  };
+
+  const handleCancelRideConfirm = async () => {
+    try {
+      if (currentRideId) {
+        await api.cancelRide(currentRideId, authUserId);
+      }
+      handleReset();
+      setShowCancelModal(false);
+    } catch (error) {
+      console.error('Error canceling ride:', error);
+      alert('Failed to cancel ride. Please try again.');
+    }
+  };
+
+  const showPoolingCard = () => {
+    if (!pickup || !dropoff) return false;
+    const candidates = buildVehicleCandidates(vehicles, pickup, carType);
+    const nearbyCount = Math.max(...candidates.map((c) => c.nearbyRequests));
+    return nearbyCount >= 2;
+  };
+
+  const getNearbyRequestsCount = () => {
+    if (!pickup) return 0;
+    const candidates = buildVehicleCandidates(vehicles, pickup, carType);
+    return Math.max(...candidates.map((c) => c.nearbyRequests));
   };
 
   return (
@@ -629,21 +802,64 @@ function BookingPage() {
           {!tripStatus ? (
             <div className="location-panel">
               <h2>Your ride</h2>
+              {dailyCommuteSuggestion && (
+                <DailyCommuteSuggestion
+                  suggestion={dailyCommuteSuggestion}
+                  onAccept={handleAcceptDailySuggestion}
+                  onDismiss={() => setDailyCommuteSuggestion(null)}
+                />
+              )}
               <div className="input-group">
-                <div className="input-row">
+                <div className="input-row input-wrapper">
                   <span className="dot green-dot"></span>
-                  <input type="text" placeholder="Pickup location" value={pickupText} onChange={(e) => setPickupText(e.target.value)} className="location-input" readOnly />
+                  <input 
+                    type="text" 
+                    placeholder="Pickup location" 
+                    value={pickupText} 
+                    onChange={(e) => setPickupText(e.target.value)}
+                    onFocus={() => setShowPickupSuggestions(true)}
+                    className="location-input" 
+                  />
                   <button className={`pin-btn ${selectingMode === 'pickup' ? 'active' : ''}`} onClick={() => setSelectingMode(selectingMode === 'pickup' ? null : 'pickup')}>
                     {selectingMode === 'pickup' ? '✕' : '📍'}
                   </button>
+                  {showPickupSuggestions && (
+                    <LocationSuggestions 
+                      type="pickup"
+                      isOpen={showPickupSuggestions}
+                      mapCenter={mapCenter}
+                      cursorLocation={mapCursorLocation}
+                      lastMapClickLocation={lastMapClickLocation}
+                      zoom={mapZoom}
+                      onSelectLocation={(loc) => handleLocationSelect(loc, 'pickup')}
+                    />
+                  )}
                 </div>
                 <div className="input-divider"></div>
-                <div className="input-row">
+                <div className="input-row input-wrapper">
                   <span className="dot black-dot"></span>
-                  <input type="text" placeholder="Dropoff location" value={dropoffText} onChange={(e) => setDropoffText(e.target.value)} className="location-input" readOnly />
+                  <input 
+                    type="text" 
+                    placeholder="Dropoff location" 
+                    value={dropoffText} 
+                    onChange={(e) => setDropoffText(e.target.value)}
+                    onFocus={() => setShowDropoffSuggestions(true)}
+                    className="location-input" 
+                  />
                   <button className={`pin-btn ${selectingMode === 'dropoff' ? 'active' : ''}`} onClick={() => setSelectingMode(selectingMode === 'dropoff' ? null : 'dropoff')}>
                     {selectingMode === 'dropoff' ? '✕' : '🏁'}
                   </button>
+                  {showDropoffSuggestions && (
+                    <LocationSuggestions 
+                      type="dropoff"
+                      isOpen={showDropoffSuggestions}
+                      mapCenter={mapCenter}
+                      cursorLocation={mapCursorLocation}
+                      lastMapClickLocation={lastMapClickLocation}
+                      zoom={mapZoom}
+                      onSelectLocation={(loc) => handleLocationSelect(loc, 'dropoff')}
+                    />
+                  )}
                 </div>
               </div>
 
@@ -654,20 +870,42 @@ function BookingPage() {
               )}
 
               {pickup && dropoff && (
-                <div className="ride-options">
-                  <div className="ride-option selected">
-                    <span>🚗</span>
-                    <div><p>RouteMATE X</p><small>4 seats • {getDistance()}m away</small></div>
-                    <span className="fare">₹{getFare()}</span>
+                <>
+                  {showPoolingCard() && (
+                    <PoolingSuggestion 
+                      nearbyRequestsCount={getNearbyRequestsCount()}
+                      matchProbability={35 + (getNearbyRequestsCount() * 15)}
+                      onCollapse={() => setShowPoolingSuggestion(false)}
+                    />
+                  )}
+
+                  <CarTypeSelection 
+                    selectedType={carType}
+                    onSelectType={setCarType}
+                  />
+
+                  <div className="ride-options">
+                    <div className="ride-option selected">
+                      <span>🚗</span>
+                      <div><p>RouteMATE X</p><small>{carType === 'mini' ? '2–3' : carType === 'sedan' ? '4' : '6'} seats • {getDistance()}m away</small></div>
+                      <span className="fare">₹{getFare()}</span>
+                    </div>
                   </div>
-                </div>
+                </>
               )}
 
               <div className="action-buttons">
-                <button className="book-btn" onClick={handleBookRide} disabled={!pickup || !dropoff || loading}>
-                  {loading ? '⏳ Booking...' : `Book ${policy === 'ml' ? '🤖 ML' : policy === 'greedy' ? '📍 Greedy' : '🎲 Random'} Ride`}
-                </button>
-                {(pickup || dropoff) && <button className="reset-btn" onClick={handleReset}>↺</button>}
+                <div className="button-group">
+                  <button className="book-btn" onClick={handleBookRide} disabled={!pickup || !dropoff || loading}>
+                    {loading ? '⏳ Booking...' : `Book ${policy === 'ml' ? '🤖 ML' : policy === 'greedy' ? '📍 Greedy' : '🎲 Random'} Ride`}
+                  </button>
+                  {(pickup || dropoff) && <button className="reset-btn" onClick={handleReset}>↺</button>}
+                </div>
+                {pickup && dropoff && (
+                  <div className="policy-badge-container">
+                    <AIDecisionBadge policy={policy} isActive={true} />
+                  </div>
+                )}
               </div>
             </div>
           ) : (
@@ -686,6 +924,7 @@ function BookingPage() {
               compareLoading={compareLoading}
               onCompare={handleCompareRide}
               onReset={handleReset}
+              onCancel={() => setShowCancelModal(true)}
             />
           )}
         </div>
@@ -698,13 +937,23 @@ function BookingPage() {
             assignedVehicle={assignedVehicle}
             onMapClick={handleMapClick}
             selectingMode={selectingMode}
-            center={[19.0760, 72.8777]}
+            onMapMove={handleMapMove}
+            onCursorMove={handleCursorMove}
+            onMapZoom={handleMapZoom}
+            center={mapCenter}
             routeGeometry={routeGeometry}
             sharedRiders={sharedRiders}
             liveVehiclePosition={liveVehiclePosition}
           />
         </div>
       </div>
+
+      <CancelRideModal
+        isOpen={showCancelModal}
+        status={tripStatus}
+        onConfirm={handleCancelRideConfirm}
+        onCancel={() => setShowCancelModal(false)}
+      />
     </div>
   );
 }
