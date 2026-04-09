@@ -10,6 +10,8 @@ import CarTypeSelection from '../components/CarTypeSelection';
 import CancelRideModal from '../components/CancelRideModal';
 import AIDecisionBadge from '../components/AIDecisionBadge';
 import DailyCommuteSuggestion from '../components/DailyCommuteSuggestion';
+import SurgePredictionCard from '../components/SurgePredictionCard';
+import SmartBookingAdvisor from '../components/SmartBookingAdvisor';
 import api from '../services/api';
 import './BookingPage.css';
 
@@ -173,6 +175,7 @@ function BookingPage() {
   const [mapCursorLocation, setMapCursorLocation] = useState(null);
   const [lastMapClickLocation, setLastMapClickLocation] = useState(null);
   const [dailyCommuteSuggestion, setDailyCommuteSuggestion] = useState(null);
+  const [surgeData, setSurgeData] = useState(null);
 
   const geocodeHydratedRef = useRef({ pickup: false, dropoff: false });
   const currentRideRef = useRef(null);
@@ -623,6 +626,7 @@ function BookingPage() {
     setShowPoolingSuggestion(false);
     setShowCancelModal(false);
     setCarType('sedan');
+    setSurgeData(null);
     battleChosenRef.current = true;
     battleResolveRef.current = null;
     if (battleTimerRef.current) {
@@ -661,6 +665,30 @@ function BookingPage() {
       cancelled = true;
     };
   }, [authUserId]);
+
+  // Fetch surge data when both pickup and dropoff are set
+  useEffect(() => {
+    if (!pickup?.lat || !pickup?.lng || !dropoff?.lat || !dropoff?.lng) {
+      setSurgeData(null);
+      return undefined;
+    }
+
+    let cancelled = false;
+    const fetchSurge = async () => {
+      try {
+        const data = await api.getSurgeSmartAdvice(
+          pickup.lat, pickup.lng, dropoff.lat, dropoff.lng
+        );
+        if (!cancelled) setSurgeData(data);
+      } catch (_error) {
+        if (!cancelled) setSurgeData(null);
+      }
+    };
+
+    fetchSurge();
+    const interval = setInterval(fetchSurge, 30000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [pickup, dropoff]);
 
   const getDistance = () => {
     if (!pickup || !dropoff) return null;
@@ -871,6 +899,22 @@ function BookingPage() {
 
               {pickup && dropoff && (
                 <>
+                  <SurgePredictionCard
+                    pickup={pickup}
+                    dropoff={dropoff}
+                    onSelectAlternatePickup={(loc) => {
+                      setPickup({ lat: loc.lat, lng: loc.lng, address: loc.address });
+                      setPickupText(loc.address || `${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)}`);
+                      geocodeHydratedRef.current.pickup = true;
+                    }}
+                  />
+
+                  <SmartBookingAdvisor
+                    surgeData={surgeData}
+                    onBookNow={handleBookRide}
+                    onDismiss={() => setSurgeData(null)}
+                  />
+
                   {showPoolingCard() && (
                     <PoolingSuggestion 
                       nearbyRequestsCount={getNearbyRequestsCount()}

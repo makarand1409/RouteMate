@@ -1,0 +1,382 @@
+/* ===== Surge Prediction Card ===== */
+.surge-prediction-card {
+  background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 16px;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+  animation: surgeSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.surge-prediction-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.05) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+@keyframes surgeSlideIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Header */
+.surge-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.surge-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.surge-icon-wrapper {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(6px);
+}
+
+.surge-header-left h3 {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.surge-header-left h3 small {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.55);
+  margin-top: 2px;
+}
+
+.surge-ml-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(76, 175, 80, 0.2);
+  border: 1px solid rgba(76, 175, 80, 0.4);
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #81c784;
+  letter-spacing: 0.3px;
+}
+
+.surge-ml-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #4caf50;
+  animation: surgePulse 1.5s ease-in-out infinite;
+}
+
+@keyframes surgePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.4); }
+}
+
+/* Current Surge Display */
+.surge-current-display {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.surge-multiplier-big {
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -1px;
+}
+
+.surge-multiplier-big.surge-low { color: #81c784; }
+.surge-multiplier-big.surge-medium { color: #ffb74d; }
+.surge-multiplier-big.surge-high { color: #ef5350; }
+
+.surge-current-meta {
+  flex: 1;
+}
+
+.surge-current-meta .surge-fare {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.surge-current-meta .surge-label {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 2px;
+}
+
+/* Chart Area */
+.surge-chart-area {
+  margin-bottom: 14px;
+}
+
+.surge-chart-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 10px;
+}
+
+.surge-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 80px;
+  padding: 0 2px;
+}
+
+.surge-bar-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
+}
+
+.surge-bar {
+  width: 100%;
+  border-radius: 4px 4px 2px 2px;
+  min-height: 8px;
+  transition: height 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  align-self: flex-end;
+}
+
+.surge-bar.bar-low { background: linear-gradient(to top, #2e7d32, #66bb6a); }
+.surge-bar.bar-medium { background: linear-gradient(to top, #e65100, #ffb74d); }
+.surge-bar.bar-high { background: linear-gradient(to top, #b71c1c, #ef5350); }
+.surge-bar.bar-best {
+  background: linear-gradient(to top, #1565c0, #42a5f5);
+  box-shadow: 0 0 10px rgba(66, 165, 245, 0.4);
+}
+
+.surge-bar-label {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.45);
+  font-weight: 500;
+}
+
+.surge-bar-value {
+  font-size: 9px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Recommendation */
+.surge-recommendation {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.surge-rec-action {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.surge-rec-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.surge-rec-icon.rec-wait {
+  background: rgba(66, 165, 245, 0.2);
+}
+
+.surge-rec-icon.rec-book {
+  background: rgba(76, 175, 80, 0.2);
+}
+
+.surge-rec-icon.rec-walk {
+  background: rgba(255, 183, 77, 0.2);
+}
+
+.surge-rec-text {
+  flex: 1;
+}
+
+.surge-rec-text strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.surge-rec-text span {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.surge-savings-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.25), rgba(76, 175, 80, 0.1));
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #81c784;
+  margin-top: 6px;
+}
+
+/* Cheaper Zones */
+.surge-cheaper-zones {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.surge-cheaper-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 8px;
+}
+
+.surge-zone-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  margin-bottom: 6px;
+  transition: background 0.2s;
+}
+
+.surge-zone-row:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.surge-zone-surge {
+  font-size: 14px;
+  font-weight: 800;
+  min-width: 42px;
+}
+
+.surge-zone-surge.zone-low { color: #81c784; }
+.surge-zone-surge.zone-medium { color: #ffb74d; }
+
+.surge-zone-info {
+  flex: 1;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.surge-zone-savings {
+  font-size: 12px;
+  font-weight: 700;
+  color: #81c784;
+}
+
+/* Confidence & Model info */
+.surge-model-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.surge-confidence {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.confidence-bar-bg {
+  width: 50px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.confidence-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #4caf50, #81c784);
+  transition: width 0.8s ease;
+}
+
+/* Loading state */
+.surge-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 30px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 13px;
+}
+
+.surge-loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-top-color: #81c784;
+  border-radius: 50%;
+  animation: surgeSpin 0.8s linear infinite;
+}
+
+@keyframes surgeSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* Collapse btn */
+.surge-collapse-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.2s;
+}
+
+.surge-collapse-btn:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
