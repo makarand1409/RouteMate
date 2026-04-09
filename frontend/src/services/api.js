@@ -173,6 +173,48 @@ class RouteMATEAPI {
       name: `Vehicle ${vehicle.vehicle_id}`,
     };
   }
+
+  // ----- Surge Prediction API -----
+
+  async getSurgeSmartAdvice(pickupLat, pickupLng, dropoffLat, dropoffLng) {
+    const query = buildQuery({
+      pickup_lat: String(pickupLat),
+      pickup_lng: String(pickupLng),
+      dropoff_lat: String(dropoffLat),
+      dropoff_lng: String(dropoffLng),
+    });
+    return await jsonFetch(`${API_BASE_URL}/surge/smart-advice?${query}`);
+  }
+
+  async getSurgePrediction(lat, lng, horizonMin = 30) {
+    const query = buildQuery({
+      lat: String(lat),
+      lng: String(lng),
+      horizon_min: String(horizonMin),
+    });
+    return await jsonFetch(`${API_BASE_URL}/surge/predict?${query}`);
+  }
+
+  async getSurgeHeatmap(lat, lng, radiusCells = 3) {
+    const query = buildQuery({
+      lat: String(lat),
+      lng: String(lng),
+      radius_cells: String(radiusCells),
+    });
+    return await jsonFetch(`${API_BASE_URL}/surge/heatmap?${query}`);
+  }
+
+  async getCurrentSurge(lat, lng) {
+    const query = buildQuery({ lat: String(lat), lng: String(lng) });
+    return await jsonFetch(`${API_BASE_URL}/surge/current?${query}`);
+  }
+
+  // ----- XAI Explainable AI API -----
+
+  async getRideExplanation(rideId, userId) {
+    const query = userId ? buildQuery({ user_id: userId }) : '';
+    return await jsonFetch(`${API_BASE_URL}/rides/${encodeURIComponent(rideId)}/explain${query ? '?' + query : ''}`);
+  }
 }
 
 const api = new RouteMATEAPI();
@@ -183,3 +225,6 @@ export const healthCheck = (...args) => api.healthCheck(...args);
 export const getCurrentPolicy = (...args) => api.getCurrentPolicy(...args);
 export const getVehicles = (...args) => api.getVehicles(...args);
 export const requestRide = (...args) => api.requestRide(...args);
+export const getSurgeSmartAdvice = (...args) => api.getSurgeSmartAdvice(...args);
+export const getSurgePrediction = (...args) => api.getSurgePrediction(...args);
+

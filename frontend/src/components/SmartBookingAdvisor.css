@@ -1,0 +1,174 @@
+/* ===== Smart Booking Advisor ===== */
+.smart-advisor {
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+  animation: advisorFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes advisorFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Strategy variants */
+.smart-advisor.strategy-wait {
+  background: linear-gradient(135deg, #0d47a1 0%, #1565c0 60%, #1976d2 100%);
+  color: #fff;
+}
+
+.smart-advisor.strategy-book_now {
+  background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 60%, #388e3c 100%);
+  color: #fff;
+}
+
+.smart-advisor.strategy-walk {
+  background: linear-gradient(135deg, #e65100 0%, #ef6c00 60%, #f57c00 100%);
+  color: #fff;
+}
+
+.smart-advisor::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Layout */
+.advisor-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.advisor-emoji {
+  font-size: 32px;
+  line-height: 1;
+  flex-shrink: 0;
+  animation: advisorBounce 2s ease-in-out infinite;
+}
+
+@keyframes advisorBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.advisor-body {
+  flex: 1;
+}
+
+.advisor-title {
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.advisor-message {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.35;
+  opacity: 0.9;
+}
+
+.advisor-savings-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.advisor-savings-amount {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 15px;
+  font-weight: 800;
+  backdrop-filter: blur(4px);
+}
+
+.advisor-countdown {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0.75;
+}
+
+.advisor-countdown-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #fff;
+  animation: countdownBlink 1s ease-in-out infinite;
+}
+
+@keyframes countdownBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* CTA button */
+.advisor-cta {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+}
+
+.advisor-btn {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'DM Sans', sans-serif;
+  backdrop-filter: blur(4px);
+}
+
+.advisor-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.advisor-btn-primary {
+  background: rgba(255, 255, 255, 0.95);
+  color: #000;
+  border-color: transparent;
+}
+
+.advisor-btn-primary:hover {
+  background: #fff;
+}
+
+/* Dismiss */
+.advisor-dismiss {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.advisor-dismiss:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
