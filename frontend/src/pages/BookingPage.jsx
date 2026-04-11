@@ -12,6 +12,7 @@ import AIDecisionBadge from '../components/AIDecisionBadge';
 import DailyCommuteSuggestion from '../components/DailyCommuteSuggestion';
 import SurgePredictionCard from '../components/SurgePredictionCard';
 import SmartBookingAdvisor from '../components/SmartBookingAdvisor';
+import AIExplainerTimeline from '../components/AIExplainerTimeline';
 import api from '../services/api';
 import './BookingPage.css';
 
@@ -41,9 +42,11 @@ function distanceKm(a, b) {
 function buildVehicleCandidates(vehicles, pickupPoint, carType = 'sedan') {
   if (!Array.isArray(vehicles) || vehicles.length === 0) {
     return [
-      { id: 1, distanceKm: 0.8, etaMin: 2.8, nearbyRequests: 1, availableSeats: 2 },
-      { id: 2, distanceKm: 1.2, etaMin: 3.8, nearbyRequests: 3, availableSeats: 3 },
-      { id: 3, distanceKm: 0.5, etaMin: 2.0, nearbyRequests: 0, availableSeats: 1 },
+      { id: 1, distanceKm: 2.3, etaMin: 5.5, nearbyRequests: 1, availableSeats: 2 },
+      { id: 2, distanceKm: 2.8, etaMin: 6.7, nearbyRequests: 3, availableSeats: 3 },
+      { id: 3, distanceKm: 1.9, etaMin: 4.6, nearbyRequests: 0, availableSeats: 1 },
+      { id: 4, distanceKm: 3.2, etaMin: 7.7, nearbyRequests: 2, availableSeats: 2 },
+      { id: 5, distanceKm: 3.5, etaMin: 8.4, nearbyRequests: 1, availableSeats: 3 },
     ];
   }
 
@@ -176,6 +179,9 @@ function BookingPage() {
   const [lastMapClickLocation, setLastMapClickLocation] = useState(null);
   const [dailyCommuteSuggestion, setDailyCommuteSuggestion] = useState(null);
   const [surgeData, setSurgeData] = useState(null);
+  const [candidateVehicles, setCandidateVehicles] = useState([]);
+  const [showCandidateSelection, setShowCandidateSelection] = useState(false);
+  const [selectedCandidateId, setSelectedCandidateId] = useState(null);
 
   const geocodeHydratedRef = useRef({ pickup: false, dropoff: false });
   const currentRideRef = useRef(null);
@@ -460,6 +466,27 @@ function BookingPage() {
   };
 
   const assignRide = async (assignmentPolicy, snapshot = null) => {
+    // Show candidate drivers visualization (5 drivers, select closest)
+    const candidates = buildVehicleCandidates(vehicles, pickup, carType);
+    setCandidateVehicles(candidates);
+    setShowCandidateSelection(true);
+    
+    // Animate through each candidate with highlight
+    for (let i = 0; i < candidates.length; i++) {
+      await new Promise(resolve => setTimeout(resolve, 350));
+      setSelectedCandidateId(candidates[i].id);
+    }
+    
+    // Final selection - show the closest driver
+    const closestDriver = candidates.reduce((best, c) => (!best || c.distanceKm < best.distanceKm ? c : best), null);
+    setSelectedCandidateId(closestDriver.id);
+    
+    // Wait a bit to show final selection
+    await new Promise(resolve => setTimeout(resolve, 600));
+    setShowCandidateSelection(false);
+    setCandidateVehicles([]);
+    setSelectedCandidateId(null);
+    
     const assignment = await api.requestRide(pickup, dropoff, assignmentPolicy, {
       userId: authUserId,
       userName: user?.name || '',
@@ -845,7 +872,8 @@ function BookingPage() {
                     placeholder="Pickup location" 
                     value={pickupText} 
                     onChange={(e) => setPickupText(e.target.value)}
-                    onFocus={() => setShowPickupSuggestions(true)}
+                    onFocus={() => { setShowPickupSuggestions(true); setShowDropoffSuggestions(false); }}
+                    onBlur={() => setTimeout(() => setShowPickupSuggestions(false), 200)}
                     className="location-input" 
                   />
                   <button className={`pin-btn ${selectingMode === 'pickup' ? 'active' : ''}`} onClick={() => setSelectingMode(selectingMode === 'pickup' ? null : 'pickup')}>
@@ -871,7 +899,8 @@ function BookingPage() {
                     placeholder="Dropoff location" 
                     value={dropoffText} 
                     onChange={(e) => setDropoffText(e.target.value)}
-                    onFocus={() => setShowDropoffSuggestions(true)}
+                    onFocus={() => { setShowDropoffSuggestions(true); setShowPickupSuggestions(false); }}
+                    onBlur={() => setTimeout(() => setShowDropoffSuggestions(false), 200)}
                     className="location-input" 
                   />
                   <button className={`pin-btn ${selectingMode === 'dropoff' ? 'active' : ''}`} onClick={() => setSelectingMode(selectingMode === 'dropoff' ? null : 'dropoff')}>
@@ -923,6 +952,54 @@ function BookingPage() {
                     />
                   )}
 
+                  {showCandidateSelection && candidateVehicles.length > 0 && (
+                    <div style={{ 
+                      padding: '16px', 
+                      background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
+                      borderRadius: '12px',
+                      border: '2px solid #0284c7',
+                      marginBottom: '12px',
+                      animation: 'slideDown 0.3s ease'
+                    }}>
+                      <h4 style={{ marginBottom: '12px', color: '#0c4a6e', fontWeight: '700' }}>
+                        🔍 Evaluating Nearby Drivers
+                      </h4>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
+                        {candidateVehicles.map(candidate => (
+                          <div
+                            key={candidate.id}
+                            style={{
+                              padding: '8px 12px',
+                              borderRadius: '8px',
+                              background: selectedCandidateId === candidate.id 
+                                ? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)'
+                                : '#e0f2fe',
+                              color: selectedCandidateId === candidate.id ? '#fff' : '#0c4a6e',
+                              border: selectedCandidateId === candidate.id 
+                                ? '2px solid #16a34a'
+                                : '1px solid #0284c7',
+                              fontWeight: '600',
+                              fontSize: '13px',
+                              boxShadow: selectedCandidateId === candidate.id 
+                                ? '0 0 12px rgba(34, 197, 94, 0.5)'
+                                : 'none',
+                              transition: 'all 0.3s ease',
+                              animation: selectedCandidateId === candidate.id 
+                                ? 'pulse 0.6s ease-in-out' 
+                                : 'none',
+                            }}>
+                            {selectedCandidateId === candidate.id && '✨'} Driver {candidate.id} ({candidate.distanceKm}km)
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#0c4a6e' }}>
+                        {selectedCandidateId 
+                          ? `✅ Selected: Driver ${selectedCandidateId} - Closest Match!` 
+                          : '⏳ Finding closest driver...'}
+                      </div>
+                    </div>
+                  )}
+
                   <CarTypeSelection 
                     selectedType={carType}
                     onSelectType={setCarType}
@@ -953,23 +1030,34 @@ function BookingPage() {
               </div>
             </div>
           ) : (
-            <TripStatus
-              status={tripStatus}
-              vehicle={assignedVehicle}
-              pickup={pickup}
-              dropoff={dropoff}
-              policy={policy}
-              battleSnapshot={battleSnapshot}
-              savings={liveSavings}
-              riders={sharedRiders}
-              progress={rideProgress}
-              rideId={currentRideId}
-              comparisonData={comparisonData}
-              compareLoading={compareLoading}
-              onCompare={handleCompareRide}
-              onReset={handleReset}
-              onCancel={() => setShowCancelModal(true)}
-            />
+            <>
+              <TripStatus
+                status={tripStatus}
+                vehicle={assignedVehicle}
+                pickup={pickup}
+                dropoff={dropoff}
+                policy={policy}
+                battleSnapshot={battleSnapshot}
+                savings={liveSavings}
+                riders={sharedRiders}
+                progress={rideProgress}
+                rideId={currentRideId}
+                comparisonData={comparisonData}
+                compareLoading={compareLoading}
+                onCompare={handleCompareRide}
+                onReset={handleReset}
+                onCancel={() => setShowCancelModal(true)}
+              />
+
+              {/* XAI: Explainable AI Decision Timeline */}
+              {currentRideId && (
+                <AIExplainerTimeline
+                  rideId={currentRideId}
+                  userId={authUserId}
+                  policy={policy}
+                />
+              )}
+            </>
           )}
         </div>
 
@@ -988,6 +1076,9 @@ function BookingPage() {
             routeGeometry={routeGeometry}
             sharedRiders={sharedRiders}
             liveVehiclePosition={liveVehiclePosition}
+            candidateVehicles={candidateVehicles}
+            selectedCandidateId={selectedCandidateId}
+            showCandidateSelection={showCandidateSelection}
           />
         </div>
       </div>

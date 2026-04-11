@@ -117,59 +117,34 @@ function LocationSuggestions({ type, onSelectLocation, isOpen, mapCenter, cursor
 
   return (
     <div className="location-suggestions">
-      {(mapCenter || cursorLocation || lastMapClickLocation) && (
-        <div className="suggestion-section">
-          <h4>🗺️ Map Suggestions</h4>
-          {cursorLocation && (
+      {(mapCenter || cursorLocation || lastMapClickLocation) && (() => {
+        // Show only one map suggestion — pick the best available.
+        const pick = lastMapClickLocation
+          ? { point: lastMapClickLocation, key: 'clicked', icon: '📌', title: 'Use selected point', labelKey: 'clicked' }
+          : cursorLocation
+            ? { point: cursorLocation, key: 'cursor', icon: '🖱️', title: 'Use cursor location', labelKey: 'cursor' }
+            : { point: mapCenter, key: 'center', icon: '📍', title: 'Use map center', labelKey: 'center' };
+
+        return (
+          <div className="suggestion-section">
+            <h4>🗺️ Map Suggestion</h4>
             <button
               className="suggestion-item"
               onClick={() => handleSelectLocation({
-                ...cursorLocation,
-                address: placeLabels.cursor || `Cursor: ${formatLatLng(cursorLocation)}`,
-                label: placeLabels.cursor || `Cursor: ${formatLatLng(cursorLocation)}`,
+                ...pick.point,
+                address: placeLabels[pick.labelKey] || `${pick.title}: ${formatLatLng(pick.point)}`,
+                label: placeLabels[pick.labelKey] || `${pick.title}: ${formatLatLng(pick.point)}`,
               })}
             >
-              <span className="suggestion-icon">🖱️</span>
+              <span className="suggestion-icon">{pick.icon}</span>
               <span className="suggestion-text">
-                Use cursor location
-                <small>{loading.cursor ? 'Loading nearby place…' : placeLabels.cursor || formatLatLng(cursorLocation)}</small>
+                {pick.title}
+                <small>{loading[pick.key] ? 'Loading nearby place…' : placeLabels[pick.labelKey] || formatLatLng(pick.point)}</small>
               </span>
             </button>
-          )}
-          {mapCenter && (
-            <button
-              className="suggestion-item"
-              onClick={() => handleSelectLocation({
-                ...mapCenter,
-                address: placeLabels.center || `Map center: ${formatLatLng(mapCenter)}`,
-                label: placeLabels.center || `Map center: ${formatLatLng(mapCenter)}`,
-              })}
-            >
-              <span className="suggestion-icon">📍</span>
-              <span className="suggestion-text">
-                Use map center
-                <small>{loading.center ? 'Loading nearby place…' : placeLabels.center || formatLatLng(mapCenter)}</small>
-              </span>
-            </button>
-          )}
-          {lastMapClickLocation && (
-            <button
-              className="suggestion-item"
-              onClick={() => handleSelectLocation({
-                ...lastMapClickLocation,
-                address: placeLabels.clicked || `Last map point: ${formatLatLng(lastMapClickLocation)}`,
-                label: placeLabels.clicked || `Last map point: ${formatLatLng(lastMapClickLocation)}`,
-              })}
-            >
-              <span className="suggestion-icon">📌</span>
-              <span className="suggestion-text">
-                Use last selected point
-                <small>{loading.clicked ? 'Loading nearby place…' : placeLabels.clicked || formatLatLng(lastMapClickLocation)}</small>
-              </span>
-            </button>
-          )}
-        </div>
-      )}
+          </div>
+        );
+      })()}
 
       {frequentLocations.length > 0 && (
         <div className="suggestion-section">

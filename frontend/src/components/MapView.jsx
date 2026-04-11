@@ -79,6 +79,9 @@ function MapView({
   routeGeometry = [],
   sharedRiders = [],
   liveVehiclePosition = null,
+  candidateVehicles = [],
+  selectedCandidateId = null,
+  showCandidateSelection = false,
 }) {
   const center = centerProp || [19.076, 72.8777];
 
@@ -113,6 +116,33 @@ function MapView({
           <Popup>🏁 Dropoff Location</Popup>
         </Marker>
       )}
+
+      {/* Candidate vehicles during selection */}
+      {showCandidateSelection && candidateVehicles.length > 0 && pickup && candidateVehicles.map((candidate, idx) => {
+        const angle = (idx / candidateVehicles.length) * Math.PI * 2;
+        const radius = 0.015; // Distance from pickup
+        const candidateLat = pickup.lat + Math.sin(angle) * radius;
+        const candidateLng = pickup.lng + Math.cos(angle) * radius;
+        
+        const isCandidateSelected = candidate.id === selectedCandidateId;
+        const candidateIcon = new L.DivIcon({
+          html: `<div style="font-size:28px;filter:${isCandidateSelected ? 'drop-shadow(0 0 8px #22c55e) brightness(1.3)' : 'opacity(0.6)'};transition:all 0.2s;">${isCandidateSelected ? '✨🚗' : '🚗'}</div>`,
+          className: 'candidate-icon',
+          iconSize: [40, 40],
+          iconAnchor: [20, 20],
+        });
+        
+        return (
+          <Marker key={`candidate-${candidate.id}`} position={[candidateLat, candidateLng]} icon={candidateIcon}>
+            <Popup>
+              {isCandidateSelected ? '⭐ SELECTED' : 'Candidate'}<br />
+              Driver {candidate.id}<br />
+              {candidate.distanceKm} km away<br />
+              ETA: {candidate.etaMin} min
+            </Popup>
+          </Marker>
+        );
+      })}
 
       {vehicles.filter((vehicle) => vehicle.id !== assignedVehicle?.id).map((vehicle) => (
         <Marker key={vehicle.id} position={vehicle.position} icon={assignedVehicle?.id === vehicle.id ? assignedVehicleIcon : vehicleIcon}>
