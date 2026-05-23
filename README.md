@@ -106,7 +106,6 @@ python src/simulator/simulation_engine.py
 ---
 
 ## Contributors
-
+- Makarand Karanjkar
 - Adithya Madivala
-- Makarand
 
