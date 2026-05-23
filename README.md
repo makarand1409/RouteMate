@@ -1,29 +1,112 @@
-RouteMate
+# RouteMate
 
 ML-based ride-sharing optimization system using reinforcement learning and vehicle pooling.
 
-Features
-Ride-sharing optimization using PPO reinforcement learning
-Vehicle pooling support
-Real-time simulation environment
-Performance comparison with heuristic baselines
-Tech Stack
+---
 
-Python, Gymnasium, Stable-Baselines3, FastAPI, React, NumPy
+## Features
 
-Results
-Improved vehicle-request matching efficiency
-Simulated 10,000+ ride requests
-Compared RL agent against greedy and random baselines
-Architecture
+- Ride-sharing optimization using PPO reinforcement learning
+- Vehicle pooling support
+- Real-time simulation environment
+- Performance comparison with heuristic baselines
+- REST API integration using FastAPI
+- Interactive frontend visualization using React
 
-(short diagram or image)
+---
 
-Installation
+## Tech Stack
 
-(very short 3–4 commands)
+- Python
+- Gymnasium
+- Stable-Baselines3
+- FastAPI
+- React
+- NumPy
+- Pandas
+- Matplotlib
 
-Contributors
-Adithya Madivala
-Makarand
+---
+
+## Results
+
+- Improved vehicle-request matching efficiency compared to heuristic approaches
+- Simulated and evaluated 10,000+ ride requests
+- Compared PPO agent against greedy and random baselines
+- Implemented vehicle pooling for efficient passenger allocation
+
+---
+
+## Architecture
+
+```text
+User Requests
+      ↓
+Simulation Environment
+      ↓
+RL Agent (PPO)
+      ↓
+Vehicle Assignment Engine
+      ↓
+Metrics & Visualization
+```
+
+---
+
+## Installation
+
+### Clone the Repository
+
+```bash
+git clone https://github.com/makarand1409/RouteMate.git
+cd RouteMate
+```
+
+### Create Virtual Environment
+
+```bash
+python -m venv venv
+```
+
+### Activate Virtual Environment
+
+#### Windows
+
+```bash
+venv\Scripts\activate
+```
+
+#### Linux/Mac
+
+```bash
+source venv/bin/activate
+```
+
+### Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### Run the Project
+
+```bash
+python src/simulator/simulation_engine.py
+```
+
+---
+
+## Future Improvements
+
+- Real-time traffic-aware routing
+- Multi-agent reinforcement learning
+- Live map integration
+- Advanced analytics dashboard
+
+---
+
+## Contributors
+
+- Adithya Madivala
+- Makarand
 
