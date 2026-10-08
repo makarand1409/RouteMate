@@ -1,6 +1,6 @@
 # RouteMate
 
-ML-based ride-sharing optimization system using reinforcement learning and vehicle pooling.
+ML-based ride-sharing optimization system using reinforcement learning and vehicle pooling, with a FastAPI backend and React frontend.
 
 ---
 
@@ -53,7 +53,7 @@ Metrics & Visualization
 
 ---
 
-## Installation
+## Setup
 
 ### Clone the Repository
 
@@ -84,16 +84,54 @@ source venv/bin/activate
 
 ### Install Dependencies
 
-```bash
-pip install -r requirements.txt
-```
-
-### Run the Project
+From the repository root, with the virtual environment activated:
 
 ```bash
 python -m pip install -r requirements_phase1.txt
 python -m pip install -r requirements_phase2.txt
 python -m pip install -r requirements_phase4.txt
+```
+
+Install frontend dependencies:
+
+```bash
+cd frontend
+npm install
+cd ..
+```
+
+## Run the Project
+
+Start the backend in one terminal from the repository root:
+
+```powershell
+.\venv\Scripts\Activate.ps1
+cd backend
+python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+Backend URLs:
+
+- API: http://localhost:8000
+- Swagger documentation: http://localhost:8000/docs
+
+Start the frontend in a second terminal from the repository root:
+
+```bash
+cd frontend
+npm start
+```
+
+Frontend URL: http://localhost:3000
+
+## Project Structure
+
+```text
+backend/       FastAPI application
+frontend/      React application
+src/           Simulation, environment, and ML code
+tests/         Automated tests
+outputs/       Models, logs, and evaluation results
 ```
 
 ---
